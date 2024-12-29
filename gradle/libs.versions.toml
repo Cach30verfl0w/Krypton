@@ -1,0 +1,27 @@
+[versions]
+krypton = "1.0.0"
+bouncycastle = "1.78" # https://www.bouncycastle.org/download/bouncy-castle-java/#release-notes
+kotlinx-serialization = "1.7.3" # https://github.com/Kotlin/kotlinx.serialization/releases
+
+# Language and SDK versions
+kotlin = "2.1.0" # https://kotlinlang.org/docs/releases.html#release-details
+jvmTarget = "17" # https://en.wikipedia.org/wiki/Java_version_history#Release_table
+android-compileSdk = "31" # https://apilevels.com/
+android-minSdk = "21" # https://apilevels.com/
+
+# Gradle Build Script
+download-plugin = "5.6.0" # https://github.com/michel-kraemer/gradle-download-task/releases
+openssl-binaries = "1.0.4" # https://gitlab.com/trixnity/trixnity-openssl-binaries/-/releases
+android-gradle = "8.7.0" # https://developer.android.com/build/releases/gradle-plugin#updating-gradle
+
+[libraries]
+kotlin-gradle-plugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
+android-gradle-plugin = { module = "com.android.tools.build:gradle", version.ref = "android-gradle" }
+kotlinx-serialization-core = { module = "org.jetbrains.kotlinx:kotlinx-serialization-core", version.ref = "kotlinx-serialization" }
+
+bouncycastle-prov = { module = "org.bouncycastle:bcprov-jdk18on", version.ref = "bouncycastle" }
+bouncycastle-pkix = { module = "org.bouncycastle:bcpkix-jdk18on", version.ref = "bouncycastle" }
+
+[plugins]
+kotlinx-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+download = { id = "de.undercouch.download", version.ref = "download-plugin" }

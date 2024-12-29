@@ -18,6 +18,7 @@ plugins {
     kotlin("multiplatform")
     id("com.android.library")
     alias(libs.plugins.kotlinx.serialization)
+    alias(libs.plugins.dokka)
 }
 
 var projectJvmTarget = libs.versions.jvmTarget.get()

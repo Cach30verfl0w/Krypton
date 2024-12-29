@@ -23,12 +23,12 @@ plugins {
 
 var projectJvmTarget = libs.versions.jvmTarget.get()
 configureAllTargets(projectJvmTarget)
-configureJvmAndAndroid()
 
 kotlin {
     sourceSets {
         commonMain.dependencies {
             api(libs.kotlinx.serialization.core)
+            api(libs.kotlinx.io.core)
         }
     }
 }

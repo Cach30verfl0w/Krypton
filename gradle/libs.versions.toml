@@ -2,6 +2,9 @@
 krypton = "1.0.0"
 bouncycastle = "1.78" # https://www.bouncycastle.org/download/bouncy-castle-java/#release-notes
 kotlinx-serialization = "1.7.3" # https://github.com/Kotlin/kotlinx.serialization/releases
+kotest-plugin = "6.0.0.M1" # https://github.com/kotest/kotest/releases
+kotest = "5.9.1" # https://github.com/kotest/kotest/releases
+kotlinx-io = "0.6.0" # https://github.com/Kotlin/kotlinx-io/releases
 
 # Language and SDK versions
 kotlin = "2.1.0" # https://kotlinlang.org/docs/releases.html#release-details
@@ -19,11 +22,22 @@ dokka = "1.9.20" # https://github.com/Kotlin/dokka/releases
 kotlin-gradle-plugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
 android-gradle-plugin = { module = "com.android.tools.build:gradle", version.ref = "android-gradle" }
 kotlinx-serialization-core = { module = "org.jetbrains.kotlinx:kotlinx-serialization-core", version.ref = "kotlinx-serialization" }
-
 bouncycastle-prov = { module = "org.bouncycastle:bcprov-jdk18on", version.ref = "bouncycastle" }
 bouncycastle-pkix = { module = "org.bouncycastle:bcpkix-jdk18on", version.ref = "bouncycastle" }
+kotlinx-io-core = { module = "org.jetbrains.kotlinx:kotlinx-io-core", version.ref = "kotlinx-io" }
+
+# Tests
+kotest-common = { module = "io.kotest:kotest-common", version.ref = "kotest" }
+kotest-engine-framework = { module = "io.kotest:kotest-framework-engine", version.ref = "kotest" }
+kotest-dataset-framework = { module = "io.kotest:kotest-framework-datatest", version.ref = "kotest" }
+kotest-assertion-core = { module = "io.kotest:kotest-assertions-core", version.ref = "kotest" }
+kotest-junit-runner = { module = "io.kotest:kotest-runner-junit5", version.ref = "kotest" }
+
+[bundles]
+kotest = ["kotest-common", "kotest-engine-framework", "kotest-dataset-framework", "kotest-assertion-core"]
 
 [plugins]
 kotlinx-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+kotest = { id = "io.kotest.multiplatform", version.ref = "kotest-plugin" }
 download = { id = "de.undercouch.download", version.ref = "download-plugin" }
 dokka = { id = "org.jetbrains.dokka", version.ref = "dokka" }

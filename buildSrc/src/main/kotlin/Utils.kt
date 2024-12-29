@@ -15,6 +15,9 @@
  */
 
 import org.gradle.api.Project
+import org.gradle.api.artifacts.ExternalModuleDependencyBundle
+import org.gradle.api.artifacts.MinimalExternalModuleDependency
+import org.gradle.api.provider.Provider
 import org.gradle.kotlin.dsl.the
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
@@ -71,4 +74,16 @@ fun Project.configureJvmAndAndroid() = with(kotlin) {
     val jvmAndAndroidMain = sourceSets.create("jvmAndAndroidMain").also { it.dependsOn(sourceSets.commonMain.get()) }
     sourceSets.getByName("androidMain").dependsOn(jvmAndAndroidMain)
     sourceSets.getByName("jvmMain").dependsOn(jvmAndAndroidMain)
+}
+
+fun Project.configureTests(
+    kotestProvider: Provider<ExternalModuleDependencyBundle>,
+    junitProvider: Provider<MinimalExternalModuleDependency>
+) = with(kotlin) {
+    sourceSets.getByName("commonTest").dependencies {
+        implementation(kotestProvider)
+    }
+    sourceSets.findByName("jvmTest")?.dependencies {
+        implementation(junitProvider)
+    }
 }

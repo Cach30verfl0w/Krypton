@@ -14,24 +14,25 @@
  * limitations under the License.
  */
 
-plugins {
-    alias(libs.plugins.kotest).apply(false)
-}
+package de.cacheoverflow.krypton.asn1
 
-val projectGroup = findProject("project.group").toString()
-val projectVersion = "${libs.versions.krypton.get()}.${System.getenv("CI_PIPELINE_IID") ?: 0}"
-val kotestBundle = libs.bundles.kotest
-val kotestJunitRunner = libs.kotest.junit.runner
+import kotlin.jvm.JvmStatic
 
-group = projectGroup
-version = projectVersion
+/**
+ * @author Cedric Hammes
+ * @since  29/12/2024
+ */
+enum class EnumTagClass(private val literal: String, val value: Byte) {
+    UNIVERSAL("Universal", 0x00),
+    APPLICATION("Application", 0x01),
+    CONTEXT_SPECIFIC("Context-Specific", 0x02),
+    PRIVATE("Private", 0x03),
+    UNKNOWN("Unknown", 0xF);
 
-subprojects {
-    apply(plugin = "io.kotest.multiplatform")
-    apply(plugin = "org.jetbrains.kotlin.multiplatform")
+    override fun toString(): String = literal
 
-    group = projectGroup
-    version = projectVersion
-
-    configureTests(kotestBundle, kotestJunitRunner)
+    companion object {
+        @JvmStatic
+        fun byByte(value: Byte): EnumTagClass = EnumTagClass.entries.firstOrNull { it.value == value } ?: UNKNOWN
+    }
 }

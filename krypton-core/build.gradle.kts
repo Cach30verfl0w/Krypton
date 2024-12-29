@@ -26,9 +26,13 @@ configureJvmAndAndroid()
 configureOpenSSL()
 
 kotlin {
-    sourceSets.getByName("jvmAndAndroidMain").dependencies {
-        api(libs.bouncycastle.prov)
-        api(libs.bouncycastle.pkix)
+    sourceSets {
+        val jvmAndAndroidMain by getting {
+            dependencies {
+                api(libs.bouncycastle.prov)
+                api(libs.bouncycastle.pkix)
+            }
+        }
     }
 }
 

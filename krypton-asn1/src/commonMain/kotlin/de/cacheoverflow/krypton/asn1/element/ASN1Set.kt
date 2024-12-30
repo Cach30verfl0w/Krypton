@@ -19,49 +19,37 @@ package de.cacheoverflow.krypton.asn1.element
 import de.cacheoverflow.krypton.asn1.EnumTagClass
 import kotlinx.io.Buffer
 import kotlinx.io.Sink
-import kotlinx.io.readByteArray
 import kotlin.jvm.JvmInline
 import kotlin.jvm.JvmStatic
 
 /**
- * TODO: Invalid parsing or writing
- *
  * @author Cedric Hammes
- * @since  29/12/2024
+ * @since  30/12/2024
  */
 @JvmInline
 @Suppress("MemberVisibilityCanBePrivate")
-value class ASN1Integer private constructor(val value: Int) : ASN1Element {
+value class ASN1Set private constructor(val children: List<ASN1Element>) : ASN1Element {
     override fun write(sink: Sink) {
         sink.writeByte(tag)
-        val buffer = Buffer()
-        var remainingValue = value
-        while (remainingValue != 0) {
-            val byte = (remainingValue and 0xFF).toByte()
-            buffer.writeByte(byte)
-            remainingValue = remainingValue ushr 8
-        }
+        val buffer = Buffer().also { buffer -> children.forEach { it.write(buffer) } }
         sink.writeASN1Length(buffer.size)
-        sink.write(buffer.readByteArray().reversedArray())
+        sink.write(buffer, buffer.size)
     }
 
-    @OptIn(ExperimentalStdlibApi::class)
-    override fun toString(): String = "Int(${value.toHexString()})"
-
-    companion object : ASN1ElementFactory<ASN1Integer> {
+    companion object : ASN1ElementFactory<ASN1Set> {
         // @formatter:off
         @JvmStatic override val tagClass: EnumTagClass = EnumTagClass.UNIVERSAL
-        @JvmStatic override val tagType: Byte = 2
-        @JvmStatic override val isConstructed: Boolean = false
+        @JvmStatic override val tagType: Byte = 0x11
+        @JvmStatic override val isConstructed: Boolean = true
         // @formatter:on
 
         @JvmStatic
-        override fun fromData(context: ASN1ParserContext, elementData: Buffer): ASN1Integer {
-            var value = 0
-            for (i in 0..<elementData.size) {
-                value = (value shl 8) or (elementData.readByte().toInt() and 0xFF)
-            }
-            return ASN1Integer(value)
-        }
+        override fun fromData(context: ASN1ParserContext, elementData: Buffer): ASN1Set =
+            ASN1Set(mutableListOf<ASN1Element>().also { children ->
+                while (elementData.size > 0L) {
+                    val child = context.readObject(elementData)
+                    children.add(child)
+                }
+            })
     }
 }

@@ -24,44 +24,33 @@ import kotlin.jvm.JvmInline
 import kotlin.jvm.JvmStatic
 
 /**
- * TODO: Invalid parsing or writing
- *
  * @author Cedric Hammes
  * @since  29/12/2024
  */
 @JvmInline
 @Suppress("MemberVisibilityCanBePrivate")
-value class ASN1Integer private constructor(val value: Int) : ASN1Element {
-    override fun write(sink: Sink) {
-        sink.writeByte(tag)
-        val buffer = Buffer()
-        var remainingValue = value
-        while (remainingValue != 0) {
-            val byte = (remainingValue and 0xFF).toByte()
-            buffer.writeByte(byte)
-            remainingValue = remainingValue ushr 8
-        }
-        sink.writeASN1Length(buffer.size)
-        sink.write(buffer.readByteArray().reversedArray())
+value class ASN1PrintableString private constructor(val value: String) : ASN1Element {
+
+    init {
+        require(value.all { it in '\u0020'..'\u007E' }) { "Illegal symbols in string '$value'" }
     }
 
-    @OptIn(ExperimentalStdlibApi::class)
-    override fun toString(): String = "Int(${value.toHexString()})"
+    override fun write(sink: Sink) {
+        sink.writeByte(tag)
+    }
 
-    companion object : ASN1ElementFactory<ASN1Integer> {
+    companion object : ASN1ElementFactory<ASN1PrintableString> {
         // @formatter:off
         @JvmStatic override val tagClass: EnumTagClass = EnumTagClass.UNIVERSAL
-        @JvmStatic override val tagType: Byte = 2
-        @JvmStatic override val isConstructed: Boolean = false
+        @JvmStatic override val tagType: Byte = 0x13
+        @JvmStatic override val isConstructed: Boolean = true
         // @formatter:on
 
         @JvmStatic
-        override fun fromData(context: ASN1ParserContext, elementData: Buffer): ASN1Integer {
-            var value = 0
-            for (i in 0..<elementData.size) {
-                value = (value shl 8) or (elementData.readByte().toInt() and 0xFF)
-            }
-            return ASN1Integer(value)
-        }
+        override fun fromData(context: ASN1ParserContext, elementData: Buffer): ASN1PrintableString =
+            ASN1PrintableString(elementData.readByteArray().decodeToString())
+
+        @JvmStatic
+        fun fromString(value: String): ASN1PrintableString = ASN1PrintableString(value)
     }
 }

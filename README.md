@@ -29,6 +29,8 @@ Also, a few dependencies are needed to make this project work. Below this text y
 | [OpenSSL](https://github.com/OpenSSL/OpenSSL)                                  | [The OpenSSL Project](https://github.com/OpenSSL/OpenSSL)   | [Apache License 2.0](https://github.com/openssl/openssl/blob/master/LICENSE.txt)                     |
 | [kotlinx.serialization](https://github.com/Kotlin/kotlinx.serialization)       | [Kotlin](https://github.com/Kotlin)                         | [Apache License 2.0](https://github.com/Kotlin/kotlinx.serialization/blob/master/LICENSE.txt)        |
 | [gradle-download-task](https://github.com/michel-kraemer/gradle-download-task) | [Michel Krämer](https://github.com/michel-kraemer)          | [Apache License 2.0](https://github.com/michel-kraemer/gradle-download-task/blob/master/LICENSE.txt) |
+| [kotlinx-io](https://github.com/Kotlin/kotlinx-io) | [Kotlin](https://github.com/Kotlin/kotlinx-io) | [Apache License 2.0](https://github.com/Kotlin/kotlinx-io/blob/master/LICENSE) |
+| [kotlinx-datetime](https://github.com/Kotlin/kotlinx-datetime) | [Kotlin](https://github.com/Kotlin/kotlinx-datetime) | [Apache License 2.0](https://github.com/Kotlin/kotlinx-datetime/blob/master/LICENSE.txt) |
 
 ## License
 This project is licensed with the Apache-2.0 License.

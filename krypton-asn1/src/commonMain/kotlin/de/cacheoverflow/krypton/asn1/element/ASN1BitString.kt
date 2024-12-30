@@ -24,44 +24,27 @@ import kotlin.jvm.JvmInline
 import kotlin.jvm.JvmStatic
 
 /**
- * TODO: Invalid parsing or writing
- *
  * @author Cedric Hammes
  * @since  29/12/2024
  */
 @JvmInline
 @Suppress("MemberVisibilityCanBePrivate")
-value class ASN1Integer private constructor(val value: Int) : ASN1Element {
+value class ASN1BitString(val element: ByteArray) : ASN1Element { // TODO
     override fun write(sink: Sink) {
         sink.writeByte(tag)
-        val buffer = Buffer()
-        var remainingValue = value
-        while (remainingValue != 0) {
-            val byte = (remainingValue and 0xFF).toByte()
-            buffer.writeByte(byte)
-            remainingValue = remainingValue ushr 8
-        }
-        sink.writeASN1Length(buffer.size)
-        sink.write(buffer.readByteArray().reversedArray())
+        sink.writeASN1Length(element.size.toLong())
+        sink.write(element)
     }
 
-    @OptIn(ExperimentalStdlibApi::class)
-    override fun toString(): String = "Int(${value.toHexString()})"
-
-    companion object : ASN1ElementFactory<ASN1Integer> {
+    companion object : ASN1ElementFactory<ASN1BitString> {
         // @formatter:off
         @JvmStatic override val tagClass: EnumTagClass = EnumTagClass.UNIVERSAL
-        @JvmStatic override val tagType: Byte = 2
+        @JvmStatic override val tagType: Byte = 0x03
         @JvmStatic override val isConstructed: Boolean = false
         // @formatter:on
 
         @JvmStatic
-        override fun fromData(context: ASN1ParserContext, elementData: Buffer): ASN1Integer {
-            var value = 0
-            for (i in 0..<elementData.size) {
-                value = (value shl 8) or (elementData.readByte().toInt() and 0xFF)
-            }
-            return ASN1Integer(value)
-        }
+        override fun fromData(context: ASN1ParserContext, elementData: Buffer): ASN1BitString =
+            ASN1BitString(elementData.readByteArray())
     }
 }

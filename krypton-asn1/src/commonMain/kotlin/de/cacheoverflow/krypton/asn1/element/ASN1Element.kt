@@ -40,7 +40,18 @@ value class ASN1ParserContext private constructor(private val factories: List<AS
      * @author Cedric Hammes
      * @since  29/12/2024
      */
-    @OptIn(ExperimentalStdlibApi::class)
+    fun readObject(source: ByteArray): ASN1Element = readObject(Buffer().also { it.write(source) })
+
+    /**
+     * This function reads the tag component from the data and tries to find a valid element factory. It found, we parse the length of the
+     * data and read the data. After that, we pass the data to the factory.
+     *
+     * @param source The source to read the data from
+     * @return       The ASN.1 element if parsed
+     *
+     * @author Cedric Hammes
+     * @since  29/12/2024
+     */
     fun readObject(source: Source): ASN1Element {
         fun Source.readASN1Length(): Long {
             val lengthByte = readByte().toInt()
@@ -82,7 +93,20 @@ value class ASN1ParserContext private constructor(private val factories: List<AS
     companion object {
         @JvmStatic
         fun default(): ASN1ParserContext =
-            ASN1ParserContext(listOf(ASN1Sequence, ASN1Integer, ASN1ObjectIdentifier, ASN1Null.Factory, ASN1OctetString))
+            ASN1ParserContext(
+                listOf(
+                    ASN1Sequence,
+                    ASN1Integer,
+                    ASN1ObjectIdentifier,
+                    ASN1Null.Factory,
+                    ASN1OctetString,
+                    ASN1Set,
+                    ASN1PrintableString,
+                    ASN1UTF8String,
+                    ASN1UTCTime,
+                    ASN1BitString
+                )
+            )
     }
 }
 
@@ -90,7 +114,7 @@ value class ASN1ParserContext private constructor(private val factories: List<AS
  * @author Cedric Hammes
  * @since  29/12/2024
  */
-interface ASN1ElementFactory<T : ASN1Element> {
+sealed interface ASN1ElementFactory<T : ASN1Element> {
     val tagClass: EnumTagClass
     val tagType: Byte
     val isConstructed: Boolean
@@ -104,7 +128,7 @@ interface ASN1ElementFactory<T : ASN1Element> {
  * @author Cedric Hammes
  * @since  29/12/2024
  */
-interface ASN1Element {
+sealed interface ASN1Element {
     fun write(sink: Sink)
 
     fun Sink.writeASN1Length(length: Long) {

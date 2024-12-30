@@ -33,7 +33,7 @@ class DERDeserializationTest : ShouldSpec() {
         should("read and re-write encoded ASN1") {
             SystemFileSystem.source(Path("src/commonTest/resources/keystore.jks")).buffered().use { source ->
                 val readData = source.peek().use { it.readByteArray() }
-                val sequence = ASN1ParserContext.default().readObject(readData)
+                val sequence = ASN1ParserContext.default().readObject(readData).getOrThrow()
                 val wroteData = Buffer().also { sequence.write(it) }.use { it.readByteArray() }
 
                 println("Read:  ${readData.toHexString()}")
@@ -48,7 +48,7 @@ class DERDeserializationTest : ShouldSpec() {
             SystemFileSystem.source(Path("src/commonTest/resources/certificate.pem")).buffered().use { source ->
                 val lines = source.readByteArray().decodeToString().lines()
                 val data = Base64.decode(lines.subList(1, lines.size - 2).joinToString(""))
-                val sequence = ASN1ParserContext.default().readObject(data)
+                val sequence = ASN1ParserContext.default().readObject(data).getOrThrow()
                 val wroteData = Buffer().also { sequence.write(it) }.use { it.readByteArray() }
 
                 println("Read:  ${data.toHexString()}")
@@ -56,6 +56,7 @@ class DERDeserializationTest : ShouldSpec() {
                 println()
                 writeStructure(0, sequence)
                 println()
+                println(data.toHexString() == wroteData.toHexString())
                 assertTrue(wroteData.contentEquals(data), "Unable to replicate data by re-writing read data")
             }
         }

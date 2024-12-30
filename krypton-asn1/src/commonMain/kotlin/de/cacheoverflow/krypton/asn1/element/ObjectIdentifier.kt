@@ -23,12 +23,26 @@ import kotlin.jvm.JvmInline
 import kotlin.jvm.JvmStatic
 
 /**
+ * This element is representing an object identifier, a worldwide unique identifier referencing objects, concepts etc. standardized by the
+ * [International Telecommunication Union](https://en.wikipedia.org/wiki/International_Telecommunication_Union).
+ *
+ * @param parts An array list containing the integer parts separated by a dot
+ *
  * @author Cedric Hammes
  * @since  29/12/2024
  */
 @JvmInline
-@Suppress("MemberVisibilityCanBePrivate")
-value class ASN1ObjectIdentifier(val parts: List<Int>) : ASN1Element {
+@Suppress("MemberVisibilityCanBePrivate", "Unused")
+value class ObjectIdentifier private constructor(val parts: List<Int>) : ASN1Element {
+
+    /**
+     * @param value String-formatted dot-separated representation of an object identifier
+     *
+     * @author Cedric Hammes
+     * @since  30/12/2024
+     */
+    constructor(value: String) : this(value.split(".").map { it.toInt() })
+
     override fun write(sink: Sink) {
         sink.writeByte(tag)
 
@@ -48,13 +62,15 @@ value class ASN1ObjectIdentifier(val parts: List<Int>) : ASN1Element {
             buffer.write(encodedBytes.toByteArray())
         }
 
-        sink.writeASN1Length(buffer.size)
-        sink.write(buffer, buffer.size)
+        buffer.use {
+            sink.writeASN1Length(it.size)
+            sink.write(it, it.size)
+        }
     }
 
-    override fun toString(): String = "Identifier(${parts.joinToString(".")})"
+    override fun toString(): String = parts.joinToString(".")
 
-    companion object : ASN1ElementFactory<ASN1ObjectIdentifier> {
+    companion object : ASN1ElementFactory<ObjectIdentifier> {
         // @formatter:off
         @JvmStatic override val tagClass: EnumTagClass = EnumTagClass.UNIVERSAL
         @JvmStatic override val tagType: Byte = 6
@@ -62,7 +78,7 @@ value class ASN1ObjectIdentifier(val parts: List<Int>) : ASN1Element {
         // @formatter:on
 
         @JvmStatic
-        override fun fromData(context: ASN1ParserContext, elementData: Buffer): ASN1ObjectIdentifier {
+        override fun fromData(context: ASN1ParserContext, elementData: Buffer): Result<ObjectIdentifier> {
             val firstByte = elementData.readByte()
             val parts = mutableListOf(firstByte / 40, firstByte % 40)
             while (elementData.size > 0) {
@@ -74,10 +90,7 @@ value class ASN1ObjectIdentifier(val parts: List<Int>) : ASN1Element {
                 } while (byte and 0x80 != 0)
                 parts.add(value)
             }
-            return ASN1ObjectIdentifier(parts)
+            return Result.success(ObjectIdentifier(parts))
         }
-
-        @JvmStatic
-        fun fromString(value: String): ASN1ObjectIdentifier = ASN1ObjectIdentifier(value.split(".").map { it.toInt() })
     }
 }

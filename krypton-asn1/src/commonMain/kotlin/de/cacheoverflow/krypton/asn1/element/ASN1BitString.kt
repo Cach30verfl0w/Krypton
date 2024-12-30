@@ -42,7 +42,7 @@ class ASN1BitString(var element: ByteArray) : ASN1Element { // TODO
         // @formatter:on
 
         @JvmStatic
-        override fun fromData(context: ASN1ParserContext, elementData: Buffer): ASN1BitString =
-            ASN1BitString(elementData.readByteArray())
+        override fun fromData(context: ASN1ParserContext, elementData: Buffer): Result<ASN1BitString> =
+            Result.success(ASN1BitString(elementData.readByteArray()))
     }
 }

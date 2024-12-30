@@ -31,9 +31,10 @@ import kotlin.jvm.JvmStatic
 value class ASN1Set private constructor(val children: MutableList<ASN1Element>) : ASN1Element {
     override fun write(sink: Sink) {
         sink.writeByte(tag)
-        val buffer = Buffer().also { buffer -> children.forEach { it.write(buffer) } }
-        sink.writeASN1Length(buffer.size)
-        sink.write(buffer, buffer.size)
+        Buffer().also { buffer -> children.forEach { it.write(buffer) } }.use { buffer ->
+            sink.writeASN1Length(buffer.size)
+            sink.write(buffer, buffer.size)
+        }
     }
 
     companion object : ASN1ElementFactory<ASN1Set> {
@@ -44,12 +45,16 @@ value class ASN1Set private constructor(val children: MutableList<ASN1Element>) 
         // @formatter:on
 
         @JvmStatic
-        override fun fromData(context: ASN1ParserContext, elementData: Buffer): ASN1Set =
-            ASN1Set(mutableListOf<ASN1Element>().also { children ->
-                while (elementData.size > 0L) {
-                    val child = context.readObject(elementData)
-                    children.add(child)
+        override fun fromData(context: ASN1ParserContext, elementData: Buffer): Result<ASN1Set> {
+            val children = mutableListOf<ASN1Element>()
+            while (elementData.size > 0L) {
+                val result = context.readObject(elementData)
+                when {
+                    result.isFailure -> return Result.failure(requireNotNull(result.exceptionOrNull()))
+                    else -> children.add(result.getOrThrow())
                 }
-            })
+            }
+            return Result.success(ASN1Set(children))
+        }
     }
 }

@@ -17,6 +17,7 @@
 package de.cacheoverflow.krypton.asn1.element
 
 import de.cacheoverflow.krypton.asn1.EnumTagClass
+import de.cacheoverflow.krypton.asn1.exception.ASN1InvalidTagException
 import kotlinx.io.*
 import kotlin.jvm.JvmInline
 import kotlin.jvm.JvmStatic
@@ -40,7 +41,7 @@ value class ASN1ParserContext private constructor(private val factories: List<AS
      * @author Cedric Hammes
      * @since  29/12/2024
      */
-    fun readObject(source: ByteArray): ASN1Element = readObject(Buffer().also { it.write(source) })
+    fun readObject(source: ByteArray): Result<ASN1Element> = readObject(Buffer().also { it.write(source) })
 
     /**
      * This function reads the tag component from the data and tries to find a valid element factory. It found, we parse the length of the
@@ -52,18 +53,18 @@ value class ASN1ParserContext private constructor(private val factories: List<AS
      * @author Cedric Hammes
      * @since  29/12/2024
      */
-    fun readObject(source: Source): ASN1Element {
-        fun Source.readASN1Length(): Long {
+    fun readObject(source: Source): Result<ASN1Element> {
+        fun Source.readASN1Length(): Int {
             val lengthByte = readByte().toInt()
             return if (lengthByte and 0x80 == 0)
-                lengthByte.toLong()
+                lengthByte
             else {
                 val lengthOfLength = lengthByte and 0x7F
                 var lengthValue: Long = 0
                 for (i in 0 until lengthOfLength) {
                     lengthValue = (lengthValue shl 8) or (readByte().toLong() and 0xFF)
                 }
-                lengthValue
+                lengthValue.toInt()
             }
         }
 
@@ -74,19 +75,11 @@ value class ASN1ParserContext private constructor(private val factories: List<AS
         val tagType = (tag.toInt() and 0x1F).toByte()
 
         if (tagClass == EnumTagClass.CONTEXT_SPECIFIC)
-            return ASN1ContextSpecificElement.fromData(
-                context = this,
-                constructed = constructed,
-                tag = tag.toByte(),
-                data = Buffer().also { it.write(source.readByteArray(source.readASN1Length().toInt())) }
-            )
+            return Buffer().also { it.write(source.readByteArray(source.readASN1Length())) }.use { ASN1ContextSpecificElement.fromData(this, tag.toByte(), it) }
         else {
-            val factory = factories.firstOrNull { it.tagClass == tagClass && it.tagType == tagType && it.isConstructed == constructed }
-                ?: throw IllegalArgumentException("Illegal type $tagType with class $tagClass (constructed = $constructed)")
-            return requireNotNull(factory.fromData(
-                context = this,
-                elementData = Buffer().also { it.write(source.readByteArray(source.readASN1Length().toInt())) }
-            ))
+            val factory = factories.firstOrNull { it.tagClass == tagClass && it.tagType == tagType }
+                ?: return Result.failure(ASN1InvalidTagException("Illegal Tag type $tagType for class $tagClass"))
+            return Buffer().also { it.write(source.readByteArray(source.readASN1Length())) }.use { factory.fromData(this, it) }
         }
     }
 
@@ -97,7 +90,7 @@ value class ASN1ParserContext private constructor(private val factories: List<AS
                 listOf(
                     ASN1Sequence,
                     ASN1Integer,
-                    ASN1ObjectIdentifier,
+                    ObjectIdentifier,
                     ASN1Null.Factory,
                     ASN1OctetString,
                     ASN1Set,
@@ -120,16 +113,46 @@ interface ASN1ElementFactory<T : ASN1Element> {
     val isConstructed: Boolean
     val tag: Byte get() = ((tagClass.value.toInt() shl 6) or (if (isConstructed) 0x20 else 0) or tagType.toInt()).toByte()
 
-    fun fromData(context: ASN1ParserContext, elementData: Buffer): T
+    fun fromData(context: ASN1ParserContext, elementData: Buffer): Result<T>
 
 }
 
 /**
+ * This element is an abstract API for serializing and converting an ASN.1 element into binary data. These elements are created by reading
+ * binary data or creating an element by the developer itself
+ *
  * @author Cedric Hammes
  * @since  29/12/2024
  */
 interface ASN1Element {
     fun write(sink: Sink)
+
+    /**
+     * This function tries to convert this ASN.1 object into an ASN.1 sequence. It supported converting an [ASN1Set] and potentially (if
+     * the data in the element is valid) converting an [ASN1OctetString] into a sequence. If the element can't be converted, this function
+     * throws an exception to the caller.
+     *
+     * @param parserContext Optional parser context used for parsing the data of a potential ASN.1 octet string into a sequence
+     * @return              If successful, the parsed or cast ASN.1 sequence out of this element
+     * @throws UnsupportedOperationException Thrown if the operation is failing due to trying parsing an invalid element
+     *
+     * @author Cedric Hammes
+     * @since  29/12/2024
+     */
+    fun asSequence(parserContext: ASN1ParserContext = ASN1ParserContext.default()): ASN1Sequence = when (this) {
+        is ASN1Sequence -> this
+        is ASN1Set -> ASN1Sequence(this.children)
+        is ASN1OctetString -> {
+            val sequence = parserContext.readObject(this.element).getOrNull()
+                ?: throw UnsupportedOperationException("Unable to convert ASN.1 octet string to ASN.1 sequence")
+            when {
+                sequence is ASN1Sequence -> sequence
+                else -> throw UnsupportedOperationException("Unable to convert ASN.1 octet string to ASN.1 sequence")
+            }
+        }
+
+        else -> throw IllegalArgumentException("Unable to convert ASN.1 element (${this::class.qualifiedName}) to ASN.1 sequence")
+    }
 
     fun Sink.writeASN1Length(length: Long) {
         if (length <= 0x7F) {

@@ -16,6 +16,8 @@
 
 package de.cacheoverflow.krypton.asn1.element
 
+import com.ionspin.kotlin.bignum.integer.BigInteger
+import com.ionspin.kotlin.bignum.integer.Sign
 import de.cacheoverflow.krypton.asn1.EnumTagClass
 import kotlinx.io.Buffer
 import kotlinx.io.Sink
@@ -23,28 +25,19 @@ import kotlinx.io.readByteArray
 import kotlin.jvm.JvmStatic
 
 /**
- * TODO: Invalid parsing or writing
- *
  * @author Cedric Hammes
  * @since  29/12/2024
  */
 @Suppress("MemberVisibilityCanBePrivate")
-class ASN1Integer private constructor(var value: Int) : ASN1Element {
+class ASN1Integer private constructor(var value: BigInteger) : ASN1Element {
     override fun write(sink: Sink) {
         sink.writeByte(tag)
-        val buffer = Buffer()
-        var remainingValue = value
-        while (remainingValue != 0) {
-            val byte = (remainingValue and 0xFF).toByte()
-            buffer.writeByte(byte)
-            remainingValue = remainingValue ushr 8
-        }
-        sink.writeASN1Length(buffer.size)
-        sink.write(buffer.readByteArray().reversedArray())
+        val binaryData = value.toByteArray()
+        sink.writeASN1Length(binaryData.size.toLong())
+        sink.write(binaryData)
     }
 
-    @OptIn(ExperimentalStdlibApi::class)
-    override fun toString(): String = "Int(${value.toHexString()})"
+    override fun toString(): String = value.toString(16)
 
     companion object : ASN1ElementFactory<ASN1Integer> {
         // @formatter:off
@@ -54,12 +47,8 @@ class ASN1Integer private constructor(var value: Int) : ASN1Element {
         // @formatter:on
 
         @JvmStatic
-        override fun fromData(context: ASN1ParserContext, elementData: Buffer): ASN1Integer {
-            var value = 0
-            for (i in 0..<elementData.size) {
-                value = (value shl 8) or (elementData.readByte().toInt() and 0xFF)
-            }
-            return ASN1Integer(value)
+        override fun fromData(context: ASN1ParserContext, elementData: Buffer): Result<ASN1Integer> {
+            return Result.success(ASN1Integer(BigInteger.fromByteArray(elementData.readByteArray(), Sign.POSITIVE))) // TODO: n
         }
     }
 }

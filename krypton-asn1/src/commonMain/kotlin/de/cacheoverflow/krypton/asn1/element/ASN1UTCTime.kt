@@ -30,13 +30,13 @@ import kotlin.jvm.JvmStatic
  * @since  29/12/2024
  */
 @Suppress("MemberVisibilityCanBePrivate")
-class ASN1UTCTime private constructor(var value: LocalDateTime) : ASN1Element {
+class ASN1UTCTime(var value: LocalDateTime) : ASN1Element {
 
     override fun write(sink: Sink) {
         sink.writeByte(tag)
-        val data = TIME_FORMAT.format(value)
-        sink.writeASN1Length(data.length.toLong())
-        sink.write(data.encodeToByteArray())
+        val data = TIME_FORMAT.format(value).encodeToByteArray()
+        sink.writeASN1Length(data.size.toLong())
+        sink.write(data)
     }
 
     override fun toString(): String = "UTCTime(${value})"
@@ -55,17 +55,14 @@ class ASN1UTCTime private constructor(var value: LocalDateTime) : ASN1Element {
         // @formatter:off
         @JvmStatic override val tagClass: EnumTagClass = EnumTagClass.UNIVERSAL
         @JvmStatic override val tagType: Byte = 0x17
-        @JvmStatic override val isConstructed: Boolean = true
+        @JvmStatic override val isConstructed: Boolean = false
         // @formatter:on
 
         @JvmStatic
-        override fun fromData(context: ASN1ParserContext, elementData: Buffer): ASN1UTCTime =
-            ASN1UTCTime(TIME_FORMAT.parse(elementData.readByteArray().decodeToString()))
+        override fun fromData(context: ASN1ParserContext, elementData: Buffer): Result<ASN1UTCTime> =
+            Result.success(ASN1UTCTime(TIME_FORMAT.parse(elementData.readByteArray().decodeToString())))
 
         @JvmStatic
         fun fromString(value: String): ASN1UTCTime = ASN1UTCTime(TIME_FORMAT.parse(value))
-
-        @JvmStatic
-        fun fromLocalDateTime(value: LocalDateTime): ASN1UTCTime = ASN1UTCTime(value)
     }
 }

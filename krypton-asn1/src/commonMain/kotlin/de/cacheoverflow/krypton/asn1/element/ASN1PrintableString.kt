@@ -27,10 +27,10 @@ import kotlin.jvm.JvmStatic
  * @since  29/12/2024
  */
 @Suppress("MemberVisibilityCanBePrivate")
-class ASN1PrintableString private constructor(var value: String) : ASN1Element {
+class ASN1PrintableString(var value: String) : ASN1Element {
 
     init {
-        require(value.all { it in '\u0020'..'\u007E' }) { "Illegal symbols in string '$value'" }
+        require(value.all { it in ' '..'~' }) { "Illegal symbols in string '$value'" }
     }
 
     override fun write(sink: Sink) {
@@ -46,14 +46,11 @@ class ASN1PrintableString private constructor(var value: String) : ASN1Element {
         // @formatter:off
         @JvmStatic override val tagClass: EnumTagClass = EnumTagClass.UNIVERSAL
         @JvmStatic override val tagType: Byte = 0x13
-        @JvmStatic override val isConstructed: Boolean = true
+        @JvmStatic override val isConstructed: Boolean = false
         // @formatter:on
 
         @JvmStatic
-        override fun fromData(context: ASN1ParserContext, elementData: Buffer): ASN1PrintableString =
-            ASN1PrintableString(elementData.readByteArray().decodeToString())
-
-        @JvmStatic
-        fun fromString(value: String): ASN1PrintableString = ASN1PrintableString(value)
+        override fun fromData(context: ASN1ParserContext, elementData: Buffer): Result<ASN1PrintableString> =
+            Result.success(ASN1PrintableString(elementData.readByteArray().decodeToString()))
     }
 }

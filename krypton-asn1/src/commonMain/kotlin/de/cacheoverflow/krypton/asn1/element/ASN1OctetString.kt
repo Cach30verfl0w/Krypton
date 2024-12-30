@@ -34,6 +34,9 @@ class ASN1OctetString(var element: ByteArray) : ASN1Element {
         sink.write(element)
     }
 
+    @OptIn(ExperimentalStdlibApi::class)
+    override fun toString(): String = element.toHexString()
+
     companion object : ASN1ElementFactory<ASN1OctetString> {
         // @formatter:off
         @JvmStatic override val tagClass: EnumTagClass = EnumTagClass.UNIVERSAL
@@ -42,7 +45,7 @@ class ASN1OctetString(var element: ByteArray) : ASN1Element {
         // @formatter:on
 
         @JvmStatic
-        override fun fromData(context: ASN1ParserContext, elementData: Buffer): ASN1OctetString =
-            ASN1OctetString(elementData.readByteArray())
+        override fun fromData(context: ASN1ParserContext, elementData: Buffer): Result<ASN1OctetString> =
+            Result.success(ASN1OctetString(elementData.readByteArray()))
     }
 }

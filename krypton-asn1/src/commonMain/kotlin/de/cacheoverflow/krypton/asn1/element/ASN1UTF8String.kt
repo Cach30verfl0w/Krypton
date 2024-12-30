@@ -45,8 +45,8 @@ class ASN1UTF8String private constructor(var value: String) : ASN1Element {
         // @formatter:on
 
         @JvmStatic
-        override fun fromData(context: ASN1ParserContext, elementData: Buffer): ASN1UTF8String =
-            ASN1UTF8String(elementData.readByteArray().decodeToString())
+        override fun fromData(context: ASN1ParserContext, elementData: Buffer): Result<ASN1UTF8String> =
+            Result.success(ASN1UTF8String(elementData.readByteArray().decodeToString()))
 
         @JvmStatic
         fun fromString(value: String): ASN1UTF8String = ASN1UTF8String(value)

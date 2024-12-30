@@ -6,6 +6,7 @@ kotest-plugin = "6.0.0.M1" # https://github.com/kotest/kotest/releases
 kotest = "5.9.1" # https://github.com/kotest/kotest/releases
 kotlinx-io = "0.6.0" # https://github.com/Kotlin/kotlinx-io/releases
 kotlinx-datetime = "0.6.1" # https://github.com/Kotlin/kotlinx-datetime/releases
+bignum = "0.3.10" # https://github.com/ionspin/kotlin-multiplatform-bignum/releases
 
 # Language and SDK versions
 kotlin = "2.0.20" # https://kotlinlang.org/docs/releases.html#release-details
@@ -27,6 +28,7 @@ bouncycastle-prov = { module = "org.bouncycastle:bcprov-jdk18on", version.ref = 
 bouncycastle-pkix = { module = "org.bouncycastle:bcpkix-jdk18on", version.ref = "bouncycastle" }
 kotlinx-io-core = { module = "org.jetbrains.kotlinx:kotlinx-io-core", version.ref = "kotlinx-io" }
 kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinx-datetime" }
+bignum = { module = "com.ionspin.kotlin:bignum", version.ref = "bignum" }
 
 # Tests
 kotest-common = { module = "io.kotest:kotest-common", version.ref = "kotest" }

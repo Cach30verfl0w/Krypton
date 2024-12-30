@@ -44,6 +44,6 @@ object ASN1Null : ASN1Element {
         override val isConstructed: Boolean = false
         // @formatter:on
 
-        override fun fromData(context: ASN1ParserContext, elementData: Buffer): ASN1Null = ASN1Null
+        override fun fromData(context: ASN1ParserContext, elementData: Buffer): Result<ASN1Null> = Result.success(ASN1Null)
     }
 }

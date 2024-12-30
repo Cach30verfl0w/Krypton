@@ -40,6 +40,8 @@ class ASN1PrintableString private constructor(var value: String) : ASN1Element {
         sink.write(byteData)
     }
 
+    override fun toString(): String = "PrintableString(\"${value}\")"
+
     companion object : ASN1ElementFactory<ASN1PrintableString> {
         // @formatter:off
         @JvmStatic override val tagClass: EnumTagClass = EnumTagClass.UNIVERSAL

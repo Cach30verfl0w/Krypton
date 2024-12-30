@@ -35,6 +35,8 @@ class ASN1UTF8String private constructor(var value: String) : ASN1Element {
         sink.write(byteData)
     }
 
+    override fun toString(): String = "UTF8String(\"${value}\")"
+
     companion object : ASN1ElementFactory<ASN1UTF8String> {
         // @formatter:off
         @JvmStatic override val tagClass: EnumTagClass = EnumTagClass.UNIVERSAL

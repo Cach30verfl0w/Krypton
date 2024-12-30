@@ -39,6 +39,8 @@ class ASN1UTCTime private constructor(var value: LocalDateTime) : ASN1Element {
         sink.write(data.encodeToByteArray())
     }
 
+    override fun toString(): String = "UTCTime(${value})"
+
     companion object : ASN1ElementFactory<ASN1UTCTime> {
         @JvmStatic val TIME_FORMAT: DateTimeFormat<LocalDateTime> = LocalDateTime.Format {
             yearTwoDigits(2000)

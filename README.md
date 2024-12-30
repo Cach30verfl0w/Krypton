@@ -17,6 +17,7 @@ Some parts of this project are based on the work of other great people. In this 
 - [trixnity-openssl-binaries](https://gitlab.com/trixnity/trixnity-openssl-binaries) - The OpenSSL binaries are acquired by the publications of this repository
 - [trixnity-crypto-core](https://gitlab.com/trixnity/trixnity/-/tree/main/trixnity-crypto-core?ref_type=heads) - The integration of OpenSSL over multiple targets is heavily inspired that builscript code
 - [A Layman's Guide to a Subset of ASN.1, BER, and DER](https://luca.ntop.org/Teaching/Appunti/asn1.html) - Used for the implementation of the ASN.1 parser
+- [IBM's Object identifiers documentation](https://www.ibm.com/docs/en/zos/2.4.0?topic=programming-object-identifiers) for the extraction of the OIDs (Object Identifiers) for certificates etc.
 
 ### Dependencies
 Also, a few dependencies are needed to make this project work. Below this text you can see a list of these project with author and license (by the time the dependency was added):

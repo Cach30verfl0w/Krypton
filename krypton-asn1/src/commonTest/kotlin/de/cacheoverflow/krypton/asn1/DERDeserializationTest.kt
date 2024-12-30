@@ -30,7 +30,6 @@ class DERDeserializationTest : ShouldSpec() {
         should("read and re-write encoded ASN1") {
             SystemFileSystem.source(Path("src/commonTest/resources/keystore.jks")).buffered().use { source ->
                 val readData = source.peek().use { it.readByteArray() }
-                println("EA")
                 val wroteData = Buffer().also { ASN1ParserContext.default().readObject(source).write(it) }.use { it.readByteArray() }
                 assertTrue(wroteData.contentEquals(readData), "Unable to replicate data by re-writing read data")
             }

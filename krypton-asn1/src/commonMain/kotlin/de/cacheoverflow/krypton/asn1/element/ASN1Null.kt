@@ -25,25 +25,16 @@ import kotlinx.io.Sink
  * @since  29/12/2024
  */
 @Suppress("MemberVisibilityCanBePrivate")
-object ASN1Null : ASN1Element {
+object ASN1Null : ASN1Element, ASN1ElementFactory<ASN1Null> {
+    override val tagClass: EnumTagClass = EnumTagClass.UNIVERSAL
+    override val tagType: Byte = 0x05
+    override val isConstructed: Boolean = false
+
+    override fun fromData(context: ASN1ParserContext, elementData: Buffer): Result<ASN1Null> = Result.success(ASN1Null)
     override fun write(sink: Sink) {
-        sink.writeByte(Factory.tag)
+        sink.writeByte(tag)
         sink.writeASN1Length(0L)
     }
 
     override fun toString(): String = "Null"
-
-    /**
-     * @author Cedric Hammes
-     * @since  29/12/2024
-     */
-    object Factory : ASN1ElementFactory<ASN1Null> {
-        // @formatter:off
-        override val tagClass: EnumTagClass = EnumTagClass.UNIVERSAL
-        override val tagType: Byte = 0x05
-        override val isConstructed: Boolean = false
-        // @formatter:on
-
-        override fun fromData(context: ASN1ParserContext, elementData: Buffer): Result<ASN1Null> = Result.success(ASN1Null)
-    }
 }

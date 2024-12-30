@@ -91,13 +91,17 @@ value class ASN1ParserContext private constructor(private val factories: List<AS
                     ASN1Sequence,
                     ASN1Integer,
                     ObjectIdentifier,
-                    ASN1Null.Factory,
+                    ASN1Null,
                     ASN1OctetString,
                     ASN1Set,
-                    ASN1PrintableString,
-                    ASN1UTF8String,
                     ASN1UTCTime,
-                    ASN1BitString
+                    ASN1BitString,
+
+                    // Strings
+                    ASN1Utf8String,
+                    ASN1PrintableString,
+                    ASN1T61String,
+                    ASN1IA5String
                 )
             )
     }

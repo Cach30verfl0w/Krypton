@@ -7,7 +7,7 @@ kotest = "5.9.1" # https://github.com/kotest/kotest/releases
 kotlinx-io = "0.6.0" # https://github.com/Kotlin/kotlinx-io/releases
 
 # Language and SDK versions
-kotlin = "2.1.0" # https://kotlinlang.org/docs/releases.html#release-details
+kotlin = "2.0.20" # https://kotlinlang.org/docs/releases.html#release-details
 jvmTarget = "17" # https://en.wikipedia.org/wiki/Java_version_history#Release_table
 android-compileSdk = "31" # https://apilevels.com/
 android-minSdk = "21" # https://apilevels.com/
@@ -15,7 +15,7 @@ android-minSdk = "21" # https://apilevels.com/
 # Gradle Build Script
 download-plugin = "5.6.0" # https://github.com/michel-kraemer/gradle-download-task/releases
 openssl-binaries = "1.0.4" # https://gitlab.com/trixnity/trixnity-openssl-binaries/-/releases
-android-gradle = "8.7.0" # https://developer.android.com/build/releases/gradle-plugin#updating-gradle
+android-gradle = "8.5.2" # https://developer.android.com/build/releases/gradle-plugin#updating-gradle
 dokka = "1.9.20" # https://github.com/Kotlin/dokka/releases
 
 [libraries]

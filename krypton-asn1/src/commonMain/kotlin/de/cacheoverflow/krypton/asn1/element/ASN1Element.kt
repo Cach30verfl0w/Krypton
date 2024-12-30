@@ -40,6 +40,7 @@ value class ASN1ParserContext private constructor(private val factories: List<AS
      * @author Cedric Hammes
      * @since  29/12/2024
      */
+    @OptIn(ExperimentalStdlibApi::class)
     fun readObject(source: Source): ASN1Element {
         fun Source.readASN1Length(): Long {
             val lengthByte = readByte().toInt()

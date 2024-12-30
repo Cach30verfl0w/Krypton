@@ -19,6 +19,8 @@ package de.cacheoverflow.krypton.asn1.element
 import de.cacheoverflow.krypton.asn1.EnumTagClass
 import kotlinx.io.Buffer
 import kotlinx.io.Sink
+import kotlinx.io.readByteArray
+import kotlinx.io.writeUByte
 import kotlin.jvm.JvmInline
 import kotlin.jvm.JvmStatic
 
@@ -29,7 +31,18 @@ import kotlin.jvm.JvmStatic
 @JvmInline
 @Suppress("MemberVisibilityCanBePrivate")
 value class ASN1Integer private constructor(val value: Int) : ASN1Element {
-    override fun write(sink: Sink) = TODO("Not implemented yet")
+    override fun write(sink: Sink) {
+        sink.writeByte(tag)
+        val buffer = Buffer()
+        var remainingValue = value
+        while (remainingValue != 0) {
+            val byte = (remainingValue and 0xFF).toByte()
+            buffer.writeByte(byte)
+            remainingValue = remainingValue ushr 8
+        }
+        sink.writeASN1Length(buffer.size)
+        sink.write(buffer.readByteArray().reversedArray())
+    }
 
     override fun toString(): String = "Int($value)"
 

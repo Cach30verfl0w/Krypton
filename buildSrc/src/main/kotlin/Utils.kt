@@ -15,16 +15,15 @@
  */
 
 import org.gradle.api.Project
-import org.gradle.api.artifacts.ExternalModuleDependencyBundle
-import org.gradle.api.artifacts.MinimalExternalModuleDependency
-import org.gradle.api.provider.Provider
 import org.gradle.kotlin.dsl.the
+import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 
 val Project.kotlin: KotlinMultiplatformExtension get() = the()
 
 fun Project.configureAllTargets(projectJvmTarget: String) = with(kotlin) {
+    @OptIn(ExperimentalKotlinGradlePluginApi::class)
     compilerOptions.freeCompilerArgs.add("-Xexpect-actual-classes")
 
     jvmToolchain(projectJvmTarget.toInt())
@@ -37,11 +36,13 @@ fun Project.configureAllTargets(projectJvmTarget: String) = with(kotlin) {
     iosArm64()
     iosSimulatorArm64()
     androidTarget {
+        @OptIn(ExperimentalKotlinGradlePluginApi::class)
         compilerOptions {
             jvmTarget.set(JvmTarget.valueOf("JVM_$projectJvmTarget"))
         }
     }
     jvm {
+        @OptIn(ExperimentalKotlinGradlePluginApi::class)
         compilerOptions {
             jvmTarget.set(JvmTarget.valueOf("JVM_$projectJvmTarget"))
         }
@@ -50,6 +51,7 @@ fun Project.configureAllTargets(projectJvmTarget: String) = with(kotlin) {
 
 fun Project.configureOpenSSL() = with(kotlin) {
     sourceSets.all {
+        @OptIn(ExperimentalKotlinGradlePluginApi::class)
         compilerOptions {
             optIn.add("kotlinx.cinterop.ExperimentalForeignApi")
         }
@@ -74,16 +76,4 @@ fun Project.configureJvmAndAndroid() = with(kotlin) {
     val jvmAndAndroidMain = sourceSets.create("jvmAndAndroidMain").also { it.dependsOn(sourceSets.commonMain.get()) }
     sourceSets.getByName("androidMain").dependsOn(jvmAndAndroidMain)
     sourceSets.getByName("jvmMain").dependsOn(jvmAndAndroidMain)
-}
-
-fun Project.configureTests(
-    kotestProvider: Provider<ExternalModuleDependencyBundle>,
-    junitProvider: Provider<MinimalExternalModuleDependency>
-) = with(kotlin) {
-    sourceSets.getByName("commonTest").dependencies {
-        implementation(kotestProvider)
-    }
-    sourceSets.findByName("jvmTest")?.dependencies {
-        implementation(junitProvider)
-    }
 }

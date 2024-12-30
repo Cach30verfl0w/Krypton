@@ -16,36 +16,24 @@
 
 package de.cacheoverflow.krypton.asn1
 
-import de.cacheoverflow.krypton.asn1.element.ASN1ContextSpecificElement
-import de.cacheoverflow.krypton.asn1.element.ASN1Element
 import de.cacheoverflow.krypton.asn1.element.ASN1ParserContext
-import de.cacheoverflow.krypton.asn1.element.ASN1Sequence
 import io.kotest.core.spec.style.ShouldSpec
+import kotlinx.io.Buffer
 import kotlinx.io.buffered
 import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
+import kotlinx.io.readByteArray
+import kotlin.test.assertTrue
 
 class DERDeserializationTest : ShouldSpec() {
     init {
-        should("eaeaea") {
-            SystemFileSystem.source(Path("/home/cach30verfl0w/IdeaProjects/krypton/krypton-asn1/keystore.jks")).buffered().use { source ->
-                val testObject = ASN1ParserContext.default().readObject(source)
-                print(0, testObject)
+        should("read and re-write encoded ASN1") {
+            SystemFileSystem.source(Path("src/commonTest/resources/keystore.jks")).buffered().use { source ->
+                val readData = source.peek().use { it.readByteArray() }
+                println("EA")
+                val wroteData = Buffer().also { ASN1ParserContext.default().readObject(source).write(it) }.use { it.readByteArray() }
+                assertTrue(wroteData.contentEquals(readData), "Unable to replicate data by re-writing read data")
             }
         }
-    }
-}
-
-fun print(level: Int, element: ASN1Element) {
-    if (element is ASN1Sequence) {
-        println("\t".repeat(level) + " Sequence:")
-        for (child in element.children) {
-            print(level + 1, child)
-        }
-    } else if (element is ASN1ContextSpecificElement) {
-        println("\t".repeat(level) + " Context-specific [0]:")
-        print(level + 1, element.element)
-    } else {
-        println("\t".repeat(level) + " " + element)
     }
 }

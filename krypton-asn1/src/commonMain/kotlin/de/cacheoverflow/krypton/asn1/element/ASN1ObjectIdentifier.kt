@@ -28,9 +28,31 @@ import kotlin.jvm.JvmStatic
  */
 @JvmInline
 @Suppress("MemberVisibilityCanBePrivate")
-value class ASN1ObjectIdentifier(val identifier: List<Int>) : ASN1Element {
-    override fun write(sink: Sink) = TODO("Not implemented yet")
-    override fun toString(): String = "Identifier(${identifier.joinToString(".")})"
+value class ASN1ObjectIdentifier(val parts: List<Int>) : ASN1Element {
+    override fun write(sink: Sink) {
+        sink.writeByte(tag)
+
+        // Write OID and length into sink
+        val buffer = Buffer()
+        buffer.writeByte((parts[0] * 40 + parts[1]).toByte())
+        for (i in 2 until parts.size) {
+            var value = parts[i]
+            val encodedBytes = mutableListOf<Byte>()
+            do {
+                encodedBytes.add(0, (value and 0x7F).toByte())
+                value = value shr 7
+            } while (value > 0)
+            for (j in 0 until encodedBytes.size - 1) {
+                encodedBytes[j] = (encodedBytes[j].toInt() or 0x80).toByte()
+            }
+            buffer.write(encodedBytes.toByteArray())
+        }
+
+        sink.writeASN1Length(buffer.size)
+        sink.write(buffer, buffer.size)
+    }
+
+    override fun toString(): String = "Identifier(${parts.joinToString(".")})"
 
     companion object : ASN1ElementFactory<ASN1ObjectIdentifier> {
         // @formatter:off
@@ -42,7 +64,7 @@ value class ASN1ObjectIdentifier(val identifier: List<Int>) : ASN1Element {
         @JvmStatic
         override fun fromData(context: ASN1ParserContext, elementData: Buffer): ASN1ObjectIdentifier {
             val firstByte = elementData.readByte()
-            val list = mutableListOf(firstByte / 40, firstByte % 40)
+            val parts = mutableListOf(firstByte / 40, firstByte % 40)
             while (elementData.size > 0) {
                 var value = 0
                 var byte: Int
@@ -50,9 +72,9 @@ value class ASN1ObjectIdentifier(val identifier: List<Int>) : ASN1Element {
                     byte = elementData.readByte().toInt() and 0xFF
                     value = (value shl 7) or (byte and 0x7F)
                 } while (byte and 0x80 != 0)
-                list.add(value)
+                parts.add(value)
             }
-            return ASN1ObjectIdentifier(list)
+            return ASN1ObjectIdentifier(parts)
         }
 
         @JvmStatic

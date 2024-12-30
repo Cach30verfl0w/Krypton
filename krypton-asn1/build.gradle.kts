@@ -19,6 +19,7 @@ plugins {
     id("com.android.library")
     alias(libs.plugins.kotlinx.serialization)
     alias(libs.plugins.dokka)
+    alias(libs.plugins.kotest)
 }
 
 var projectJvmTarget = libs.versions.jvmTarget.get()
@@ -29,6 +30,13 @@ kotlin {
         commonMain.dependencies {
             api(libs.kotlinx.serialization.core)
             api(libs.kotlinx.io.core)
+        }
+        commonTest.dependencies {
+            implementation(kotlin("test"))
+            implementation(libs.bundles.kotest)
+        }
+        jvmTest.dependencies {
+            implementation(libs.kotest.junit.runner)
         }
     }
 }

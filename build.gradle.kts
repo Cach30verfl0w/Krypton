@@ -14,24 +14,16 @@
  * limitations under the License.
  */
 
-plugins {
-    alias(libs.plugins.kotest).apply(false)
-}
-
 val projectGroup = findProject("project.group").toString()
 val projectVersion = "${libs.versions.krypton.get()}.${System.getenv("CI_PIPELINE_IID") ?: 0}"
 val kotestBundle = libs.bundles.kotest
-val kotestJunitRunner = libs.kotest.junit.runner
 
 group = projectGroup
 version = projectVersion
 
 subprojects {
-    apply(plugin = "io.kotest.multiplatform")
     apply(plugin = "org.jetbrains.kotlin.multiplatform")
 
     group = projectGroup
     version = projectVersion
-
-    configureTests(kotestBundle, kotestJunitRunner)
 }

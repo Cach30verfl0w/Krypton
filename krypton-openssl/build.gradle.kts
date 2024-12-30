@@ -16,6 +16,7 @@
 
 import de.undercouch.gradle.tasks.download.Download
 import org.gradle.internal.os.OperatingSystem
+import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.konan.target.KonanTarget
 import java.nio.file.Path
 import kotlin.io.path.absolutePathString
@@ -68,6 +69,7 @@ kotlin {
                 }
             }
         }
+        @OptIn(ExperimentalKotlinGradlePluginApi::class)
         target.compilerOptions {
             freeCompilerArgs.addAll("-include-binary", targetFolder.resolve("lib/libcrypto.a").absolutePathString())
             if (target.konanTarget == KonanTarget.MINGW_X64) {

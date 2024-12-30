@@ -75,7 +75,7 @@ class DERDeserializationTest : ShouldSpec() {
                 writeStructure(level + 1, child)
             }
         }
-        is ASN1ContextSpecificElement -> {
+        is ASN1ContextSpecific -> {
             println("${"\t".repeat(level)} Context-specific:")
             writeStructure(level + 1, element.element)
         }

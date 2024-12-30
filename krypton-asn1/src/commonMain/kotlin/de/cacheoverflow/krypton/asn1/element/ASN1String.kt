@@ -26,7 +26,7 @@ import kotlinx.io.readByteArray
  * @since  30/12/2024
  */
 @Suppress("MemberVisibilityCanBePrivate")
-sealed class ASN1String<T : ASN1String<T>>(private var factory: Factory<T>, var value: String) : ASN1Element {
+sealed class ASN1String<T : ASN1String<T>>(private val factory: Factory<T>, var value: String) : ASN1Element {
 
     init {
         require(factory.validator?.invoke(value)?: true) { "The string's content is invalid" }
@@ -85,4 +85,3 @@ class ASN1T61String(value: String) : ASN1String<ASN1T61String>(ASN1T61String, va
 class ASN1IA5String(value: String) : ASN1String<ASN1IA5String>(ASN1IA5String, value) {
     companion object : Factory<ASN1IA5String>(0x16, { ASN1IA5String(it) }, { value -> value.all { it.code in 0..127 } })
 }
-

@@ -19,33 +19,28 @@ package de.cacheoverflow.krypton.asn1.element
 import de.cacheoverflow.krypton.asn1.EnumTagClass
 import kotlinx.io.Buffer
 import kotlinx.io.Sink
-import kotlin.jvm.JvmInline
-import kotlin.jvm.JvmStatic
 
 /**
  * @author Cedric Hammes
  * @since  30/12/2024
  */
-@JvmInline
-@Suppress("MemberVisibilityCanBePrivate")
-value class ASN1Set private constructor(val children: MutableList<ASN1Element>) : ASN1Element {
+sealed class ASN1Collection<T : ASN1Collection<T>>(private val factory: Factory<T>, val children: List<ASN1Element>) : ASN1Element {
     override fun write(sink: Sink) {
-        sink.writeByte(tag)
+        sink.writeByte(factory.tag)
         Buffer().also { buffer -> children.forEach { it.write(buffer) } }.use { buffer ->
             sink.writeASN1Length(buffer.size)
             sink.write(buffer, buffer.size)
         }
     }
 
-    companion object : ASN1ElementFactory<ASN1Set> {
-        // @formatter:off
-        @JvmStatic override val tagClass: EnumTagClass = EnumTagClass.UNIVERSAL
-        @JvmStatic override val tagType: Byte = 0x11
-        @JvmStatic override val isConstructed: Boolean = true
-        // @formatter:on
+    sealed class Factory<T : ASN1Collection<T>>(
+        override val tagType: Byte,
+        private val factory: (List<ASN1Element>) -> T
+    ) : ASN1ElementFactory<T> {
+        override val tagClass: EnumTagClass = EnumTagClass.UNIVERSAL
+        override val isConstructed: Boolean = true
 
-        @JvmStatic
-        override fun fromData(context: ASN1ParserContext, elementData: Buffer): Result<ASN1Set> {
+        override fun fromData(context: ASN1ParserContext, elementData: Buffer): Result<T> {
             val children = mutableListOf<ASN1Element>()
             while (elementData.size > 0L) {
                 val result = context.readObject(elementData)
@@ -54,7 +49,15 @@ value class ASN1Set private constructor(val children: MutableList<ASN1Element>) 
                     else -> children.add(result.getOrThrow())
                 }
             }
-            return Result.success(ASN1Set(children))
+            return Result.success(factory(children))
         }
     }
+}
+
+class ASN1Sequence(children: List<ASN1Element>) : ASN1Collection<ASN1Sequence>(ASN1Sequence, children) {
+    companion object : Factory<ASN1Sequence>(0x10, { ASN1Sequence(it) })
+}
+
+class ASN1Set(children: List<ASN1Element>) : ASN1Collection<ASN1Set>(ASN1Set, children) {
+    companion object : Factory<ASN1Set>(0x11, { ASN1Set(it) })
 }

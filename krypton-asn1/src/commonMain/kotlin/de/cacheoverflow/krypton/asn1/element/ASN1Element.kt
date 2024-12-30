@@ -71,11 +71,12 @@ value class ASN1ParserContext private constructor(private val factories: List<AS
         // Acquire tag type and tag class. If factory found, read the data and construct object
         val tag = source.readUByte()
         val tagClass = EnumTagClass.byByte((tag.toInt() shr 6).toByte())
-        val constructed = ((tag.toInt() and 0xFF) shr 4) and 0b1 == 1
+        // val constructed = ((tag.toInt() and 0xFF) shr 4) and 0b1 == 1
         val tagType = (tag.toInt() and 0x1F).toByte()
 
         if (tagClass == EnumTagClass.CONTEXT_SPECIFIC)
-            return Buffer().also { it.write(source.readByteArray(source.readASN1Length())) }.use { ASN1ContextSpecificElement.fromData(this, tag.toByte(), it) }
+            return Buffer().also { it.write(source.readByteArray(source.readASN1Length())) }
+                .use { ASN1ContextSpecific.fromData(this, tag.toByte(), it) }
         else {
             val factory = factories.firstOrNull { it.tagClass == tagClass && it.tagType == tagType }
                 ?: return Result.failure(ASN1InvalidTagException("Illegal Tag type $tagType for class $tagClass"))

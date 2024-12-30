@@ -30,7 +30,7 @@ import kotlin.test.assertTrue
 @OptIn(ExperimentalEncodingApi::class, ExperimentalStdlibApi::class)
 class DERDeserializationTest : ShouldSpec() {
     init {
-        should("read and re-write encoded ASN1") {
+        should("read and re-write ASN1-encoded keystore") {
             SystemFileSystem.source(Path("src/commonTest/resources/keystore.jks")).buffered().use { source ->
                 val readData = source.peek().use { it.readByteArray() }
                 val sequence = ASN1ParserContext.default().readObject(readData).getOrThrow()
@@ -44,7 +44,7 @@ class DERDeserializationTest : ShouldSpec() {
                 assertTrue(wroteData.contentEquals(readData), "Unable to replicate data by re-writing read data")
             }
         }
-        should("deserialize X509 certificate") {
+        should("read and re-write ASN1-encoded certificate") {
             SystemFileSystem.source(Path("src/commonTest/resources/certificate.pem")).buffered().use { source ->
                 val lines = source.readByteArray().decodeToString().lines()
                 val data = Base64.decode(lines.subList(1, lines.size - 2).joinToString(""))

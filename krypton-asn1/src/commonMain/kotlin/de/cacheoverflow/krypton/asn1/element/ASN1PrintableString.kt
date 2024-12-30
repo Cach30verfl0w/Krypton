@@ -20,16 +20,14 @@ import de.cacheoverflow.krypton.asn1.EnumTagClass
 import kotlinx.io.Buffer
 import kotlinx.io.Sink
 import kotlinx.io.readByteArray
-import kotlin.jvm.JvmInline
 import kotlin.jvm.JvmStatic
 
 /**
  * @author Cedric Hammes
  * @since  29/12/2024
  */
-@JvmInline
 @Suppress("MemberVisibilityCanBePrivate")
-value class ASN1PrintableString private constructor(val value: String) : ASN1Element {
+class ASN1PrintableString private constructor(var value: String) : ASN1Element {
 
     init {
         require(value.all { it in '\u0020'..'\u007E' }) { "Illegal symbols in string '$value'" }
@@ -37,6 +35,9 @@ value class ASN1PrintableString private constructor(val value: String) : ASN1Ele
 
     override fun write(sink: Sink) {
         sink.writeByte(tag)
+        val byteData = value.encodeToByteArray()
+        sink.writeASN1Length(byteData.size.toLong())
+        sink.write(byteData)
     }
 
     companion object : ASN1ElementFactory<ASN1PrintableString> {

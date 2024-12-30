@@ -20,7 +20,6 @@ import de.cacheoverflow.krypton.asn1.EnumTagClass
 import kotlinx.io.Buffer
 import kotlinx.io.Sink
 import kotlinx.io.readByteArray
-import kotlin.jvm.JvmInline
 import kotlin.jvm.JvmStatic
 
 /**
@@ -29,9 +28,8 @@ import kotlin.jvm.JvmStatic
  * @author Cedric Hammes
  * @since  29/12/2024
  */
-@JvmInline
 @Suppress("MemberVisibilityCanBePrivate")
-value class ASN1Integer private constructor(val value: Int) : ASN1Element {
+class ASN1Integer private constructor(var value: Int) : ASN1Element {
     override fun write(sink: Sink) {
         sink.writeByte(tag)
         val buffer = Buffer()

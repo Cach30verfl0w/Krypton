@@ -114,7 +114,7 @@ value class ASN1ParserContext private constructor(private val factories: List<AS
  * @author Cedric Hammes
  * @since  29/12/2024
  */
-sealed interface ASN1ElementFactory<T : ASN1Element> {
+interface ASN1ElementFactory<T : ASN1Element> {
     val tagClass: EnumTagClass
     val tagType: Byte
     val isConstructed: Boolean
@@ -128,7 +128,7 @@ sealed interface ASN1ElementFactory<T : ASN1Element> {
  * @author Cedric Hammes
  * @since  29/12/2024
  */
-sealed interface ASN1Element {
+interface ASN1Element {
     fun write(sink: Sink)
 
     fun Sink.writeASN1Length(length: Long) {

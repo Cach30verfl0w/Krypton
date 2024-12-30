@@ -28,7 +28,7 @@ import kotlin.jvm.JvmStatic
  */
 @JvmInline
 @Suppress("MemberVisibilityCanBePrivate")
-value class ASN1Set private constructor(val children: List<ASN1Element>) : ASN1Element {
+value class ASN1Set private constructor(val children: MutableList<ASN1Element>) : ASN1Element {
     override fun write(sink: Sink) {
         sink.writeByte(tag)
         val buffer = Buffer().also { buffer -> children.forEach { it.write(buffer) } }

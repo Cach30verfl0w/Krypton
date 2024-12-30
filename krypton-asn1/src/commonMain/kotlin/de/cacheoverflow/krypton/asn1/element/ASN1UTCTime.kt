@@ -23,16 +23,14 @@ import kotlinx.datetime.format.char
 import kotlinx.io.Buffer
 import kotlinx.io.Sink
 import kotlinx.io.readByteArray
-import kotlin.jvm.JvmInline
 import kotlin.jvm.JvmStatic
 
 /**
  * @author Cedric Hammes
  * @since  29/12/2024
  */
-@JvmInline
 @Suppress("MemberVisibilityCanBePrivate")
-value class ASN1UTCTime private constructor(val value: LocalDateTime) : ASN1Element {
+class ASN1UTCTime private constructor(var value: LocalDateTime) : ASN1Element {
 
     override fun write(sink: Sink) {
         sink.writeByte(tag)

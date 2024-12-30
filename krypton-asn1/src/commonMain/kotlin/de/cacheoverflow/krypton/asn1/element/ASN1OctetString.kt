@@ -20,16 +20,14 @@ import de.cacheoverflow.krypton.asn1.EnumTagClass
 import kotlinx.io.Buffer
 import kotlinx.io.Sink
 import kotlinx.io.readByteArray
-import kotlin.jvm.JvmInline
 import kotlin.jvm.JvmStatic
 
 /**
  * @author Cedric Hammes
  * @since  29/12/2024
  */
-@JvmInline
 @Suppress("MemberVisibilityCanBePrivate")
-value class ASN1OctetString(val element: ByteArray) : ASN1Element {
+class ASN1OctetString(var element: ByteArray) : ASN1Element {
     override fun write(sink: Sink) {
         sink.writeByte(tag)
         sink.writeASN1Length(element.size.toLong())

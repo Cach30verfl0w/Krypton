@@ -12,7 +12,7 @@ import kotlin.jvm.JvmStatic
  */
 @JvmInline
 @Suppress("MemberVisibilityCanBePrivate")
-value class ASN1Sequence private constructor(val children: List<ASN1Element>) : ASN1Element {
+value class ASN1Sequence private constructor(val children: MutableList<ASN1Element>) : ASN1Element {
     override fun write(sink: Sink) {
         sink.writeByte(tag)
         val buffer = Buffer().also { buffer -> children.forEach { it.write(buffer) } }
@@ -43,7 +43,7 @@ value class ASN1Sequence private constructor(val children: List<ASN1Element>) : 
  * @since  29/12/2024
  */
 @Suppress("MemberVisibilityCanBePrivate")
-class ASN1ContextSpecificElement private constructor(val tag: Byte, val element: ASN1Element) : ASN1Element {
+class ASN1ContextSpecificElement private constructor(var tag: Byte, var element: ASN1Element) : ASN1Element {
     override fun write(sink: Sink) {
         sink.writeByte(tag)
         val contentBuffer = Buffer().also { element.write(it) }
@@ -52,7 +52,7 @@ class ASN1ContextSpecificElement private constructor(val tag: Byte, val element:
     }
 
     companion object {
-        // TODO: Parse non-constructed as UTF8 String
+
         @JvmStatic
         fun fromData(context: ASN1ParserContext, constructed: Boolean, tag: Byte, data: Buffer): ASN1ContextSpecificElement =
             ASN1ContextSpecificElement(tag, context.readObject(data))

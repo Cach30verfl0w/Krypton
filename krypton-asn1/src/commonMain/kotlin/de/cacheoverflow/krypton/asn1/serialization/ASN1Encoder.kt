@@ -41,11 +41,12 @@ import kotlin.reflect.KClass
 @OptIn(InternalSerializationApi::class, ExperimentalSerializationApi::class)
 class ASN1Encoder private constructor(
     private val parent: ASN1Collection<*>?,
-    type: KClass<out ASN1Collection<*>> = ASN1Sequence::class
+    type: KClass<out ASN1Collection<*>> = ASN1Sequence::class,
+    private val endEncode: (ASN1Collection<*>, ASN1Collection<*>) -> Unit = { p, value -> p.add(value) }
 ) : TaggedEncoder<SerialASN1Tag>() {
-    internal val sequence: ASN1Collection<*> = when(type) {
-        ASN1Sequence::class -> ASN1Sequence()
-        ASN1Set::class -> ASN1Set()
+    internal val sequence: ASN1Collection<*> = when (type) {
+        ASN1Sequence::class -> ASN1Sequence.of()
+        ASN1Set::class -> ASN1Set.of()
         else -> throw IllegalArgumentException("$type is not supported")
     }
 
@@ -68,19 +69,27 @@ class ASN1Encoder private constructor(
     // @formatter:on
 
     override fun endEncode(descriptor: SerialDescriptor) {
-        parent?.add(sequence)
+        parent?.also { endEncode(parent, sequence) }
     }
 
     override fun beginStructure(descriptor: SerialDescriptor): CompositeEncoder {
-        fun beginStructure0(): CompositeEncoder = when (descriptor.kind) {
-            StructureKind.CLASS -> ASN1Encoder(sequence, descriptor.findAnnotation<ClassKind>()?.value ?: ASN1Sequence::class)
-            StructureKind.LIST -> ASN1Encoder(sequence) // TODO: Replace with specialized decoder
-            else -> super.beginStructure(descriptor)
-        }
+        fun beginStructure0(endEncode: (ASN1Collection<*>, ASN1Collection<*>) -> Unit = { p, v -> p.add(v) }): CompositeEncoder =
+            when (descriptor.kind) {
+                StructureKind.CLASS -> ASN1Encoder(
+                    sequence,
+                    descriptor.findAnnotation<ClassKind>()?.value ?: ASN1Sequence::class,
+                    endEncode
+                )
+
+                StructureKind.LIST -> ASN1Encoder(sequence, endEncode = endEncode) // TODO: Replace with specialized decoder
+                else -> super.beginStructure(descriptor)
+            }
 
         return when (val containerType = descriptor.findAnnotation<WrappedInto>()?.value) {
             null -> beginStructure0()
-            else -> TODO("Structure wrapped into containerType")
+            else -> beginStructure0 { parent, data ->
+                parent.add(requireNotNull(requireNotNull(ASN1Element.ASN1Tag.fromClass(containerType)).findFactory()).wrap(data))
+            }
         }
     }
 
@@ -88,6 +97,7 @@ class ASN1Encoder private constructor(
         @JvmStatic
         fun <T> serialize(sink: Sink, value: T, serializationStrategy: SerializationStrategy<T>) =
             ASN1Encoder(null).also { it.encodeSerializableValue(serializationStrategy, value) }.sequence[0].write(sink)
+
         fun <T> serialize(value: T, serializationStrategy: SerializationStrategy<T>): ByteArray =
             Buffer().also { serialize(it, value, serializationStrategy) }.use { it.readByteArray() }
     }

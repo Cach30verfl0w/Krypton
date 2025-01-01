@@ -17,7 +17,6 @@
 package de.cacheoverflow.krypton.asn1.serialization
 
 import de.cacheoverflow.krypton.asn1.*
-import de.cacheoverflow.krypton.asn1.ASN1IA5String.Companion.readASN1Length
 import de.cacheoverflow.krypton.asn1.annotation.ClassKind
 import de.cacheoverflow.krypton.asn1.annotation.WrappedInto
 import kotlinx.io.Buffer
@@ -31,72 +30,79 @@ import kotlinx.serialization.encoding.CompositeDecoder
 import kotlinx.serialization.internal.TaggedDecoder
 import kotlin.jvm.JvmStatic
 
+internal inline fun <reified T : ASN1Element> ASN1Collection<*>.dropFirstOrThrow(): T {
+    val element = requireNotNull(removeFirstOrNull()) { "Expected element, but got null" }
+    return element as? T
+        ?: throw IllegalArgumentException("Expected ${T::class.qualifiedName}, but got ${element::class.qualifiedName}")
+}
+
 /**
  * @author Cedric Hammes
  * @since  31/12/2024
  */
 @OptIn(InternalSerializationApi::class, ExperimentalSerializationApi::class)
-class ASN1Decoder private constructor(internal val source: Source) : TaggedDecoder<SerialASN1Tag>() {
+class ASN1Decoder private constructor(internal val root: ASN1Collection<*>, private val initial: Boolean) : TaggedDecoder<SerialASN1Tag>() {
     private var currentIndex: Int = 0
     override fun SerialDescriptor.getTag(index: Int): SerialASN1Tag = SerialASN1Tag.fromDescriptor(this, index)
     override fun decodeElementIndex(descriptor: SerialDescriptor): Int =
         if (descriptor.elementsCount == currentIndex) CompositeDecoder.DECODE_DONE else currentIndex++
 
-    override fun decodeTaggedByte(tag: SerialASN1Tag): Byte = ASN1Integer.fromSource(source).getOrThrow().asByte()
-    override fun decodeTaggedShort(tag: SerialASN1Tag): Short = ASN1Integer.fromSource(source).getOrThrow().asShort()
-    override fun decodeTaggedInt(tag: SerialASN1Tag): Int = ASN1Integer.fromSource(source).getOrThrow().asInt()
-    override fun decodeTaggedLong(tag: SerialASN1Tag): Long = ASN1Integer.fromSource(source).getOrThrow().asLong()
-    override fun decodeTaggedString(tag: SerialASN1Tag): String = when (val kind = tag.stringKind) {
-        ASN1Utf8String::class -> ASN1Utf8String.fromSource(source)
-        ASN1PrintableString::class -> ASN1PrintableString.fromSource(source)
-        ASN1T61String::class -> ASN1T61String.fromSource(source)
-        ASN1IA5String::class -> ASN1IA5String.fromSource(source)
-        else -> throw IllegalArgumentException("Unable to deserialize string (type ${kind?.qualifiedName?: "unknown"} not supported)")
-    }.getOrThrow().asString()
-    override fun decodeTaggedNotNullMark(tag: SerialASN1Tag): Boolean {
-        if (ASN1Element.ASN1Tag(source.peek()) == ASN1Element.ASN1Tag.NULL) {
-            ASN1Null.fromSource(source)
-            return false
-        }
-        return true
+    override fun decodeTaggedByte(tag: SerialASN1Tag): Byte = root.dropFirstOrThrow<ASN1Integer>().asByte()
+    override fun decodeTaggedShort(tag: SerialASN1Tag): Short = root.dropFirstOrThrow<ASN1Integer>().asShort()
+    override fun decodeTaggedInt(tag: SerialASN1Tag): Int = root.dropFirstOrThrow<ASN1Integer>().asInt()
+    override fun decodeTaggedLong(tag: SerialASN1Tag): Long = root.dropFirstOrThrow<ASN1Integer>().asLong()
+    override fun decodeTaggedString(tag: SerialASN1Tag): String {
+        val kind = requireNotNull(tag.stringKind) { "No string kind found, please specify with @ClassKind" }
+        val element = root.dropFirstOrThrow<ASN1String<*>>()
+        if (element::class != kind)
+            throw IllegalArgumentException("Expected '${kind::qualifiedName}', but got '${element::class.qualifiedName}'")
+        return element.asString()
     }
 
+    override fun decodeNotNullMark(): Boolean = if (root.first() is ASN1Null) {
+        root.removeFirst()
+        false
+    } else true
+
     override fun beginStructure(descriptor: SerialDescriptor): CompositeDecoder {
-        fun beginStructure0(): CompositeDecoder {
-            val tag = ASN1Element.ASN1Tag(source)
-            source.readASN1Length()
-            val kind = descriptor.kind
-            val classKind = descriptor.findAnnotation<ClassKind>()?.value ?: ASN1Sequence::class
-            return when {
-                kind == StructureKind.CLASS && tag.isSequence() -> {
-                    if (classKind != ASN1Sequence::class) throw IllegalArgumentException("Kind of class is not matching sequence")
-                    ASN1Decoder(source)
+        fun beginStructure0(element: ASN1Element): CompositeDecoder {
+            return when(descriptor.kind) { // TODO: Add support for list
+                StructureKind.CLASS -> {
+                    val classKind = descriptor.findAnnotation<ClassKind>()?.value ?: ASN1Sequence::class
+                    if (element::class != classKind)
+                        throw IllegalArgumentException("Expected '${classKind::qualifiedName}', but got ${element::class.qualifiedName}")
+                    return ASN1Decoder(element as ASN1Collection<*>, false)
                 }
-                kind == StructureKind.CLASS && tag.isSet() -> {
-                    if (classKind != ASN1Set::class) throw IllegalArgumentException("Kind of class is not matching set")
-                    ASN1Decoder(source)
-                }
-                kind == StructureKind.LIST && tag.isList() -> ASN1Decoder(source) // TODO: Replace with specialized decoder
                 else -> super.beginStructure(descriptor)
             }
         }
 
-        return when (descriptor.findAnnotation<WrappedInto>()?.value) {
-            null -> beginStructure0()
+        return when (val containerType = descriptor.findAnnotation<WrappedInto>()?.value) {
+            null -> beginStructure0(if (initial) root else root.dropFirstOrThrow<ASN1Collection<*>>())
             else -> {
-                ASN1Element.ASN1Tag(source) // TODO: Validate containter type tag
-                source.readASN1Length()
-                beginStructure0()
+                val element = requireNotNull(root.removeFirst())
+                if (element::class != containerType)
+                    throw IllegalArgumentException("Expected ${containerType.qualifiedName}, but got ${element::class.qualifiedName}")
+                beginStructure0((element as ASN1ElementContainer).unwrap())
             }
         }
     }
 
     companion object {
         @JvmStatic
-        fun <T> deserialize(source: Source, deserializationStrategy: DeserializationStrategy<T>): T =
-            ASN1Decoder(source).decodeSerializableValue(deserializationStrategy)
+        fun <T> deserialize(source: ASN1Collection<*>, deserializationStrategy: DeserializationStrategy<T>): T =
+            ASN1Decoder(source, true).decodeSerializableValue(deserializationStrategy)
+
         @JvmStatic
-        fun <T> deserialize(source: ByteArray, deserializationStrategy: DeserializationStrategy<T>): T =
-            Buffer().also { it.write(source) }.use { deserialize(it, deserializationStrategy) }
+        fun <T> deserialize(source: Source, deserializationStrategy: DeserializationStrategy<T>): Result<T> {
+            val element = ASN1Element.ASN1Tag.read(source)
+            if (element.isFailure) return Result.failure(requireNotNull(element.exceptionOrNull()))
+            if (element.getOrThrow() !is ASN1Collection<*>) return Result.failure(IllegalArgumentException("Element is not collection"))
+            return Result.success(deserialize(element.getOrThrow() as ASN1Collection<*>, deserializationStrategy))
+        }
+
+        @JvmStatic
+        fun <T> deserialize(source: ByteArray, deserializationStrategy: DeserializationStrategy<T>): Result<T> =
+            deserialize(Buffer().also { it.write(source) }, deserializationStrategy)
     }
 }

@@ -16,10 +16,8 @@
 
 package de.cacheoverflow.krypton.asn1
 
-import kotlinx.io.Buffer
-import kotlinx.io.Sink
-import kotlinx.io.Source
-import kotlinx.io.readByteArray
+import kotlinx.io.*
+import kotlin.jvm.JvmStatic
 
 /**
  * @author Cedric Hammes
@@ -38,6 +36,7 @@ sealed class ASN1Collection<T : ASN1Collection<T>>(
         }
     }
 
+    override fun toString(): String = "Collection(${children.joinToString(", ")})"
     override fun unwrap(): ASN1Element = children[0]
     override fun asCollection(): ASN1Collection<*> = this
     override fun asString(): String = throw UnsupportedOperationException("Unable to convert collection to string")
@@ -52,16 +51,18 @@ sealed class ASN1Collection<T : ASN1Collection<T>>(
             // TODO: Remove buffer creation
             Buffer().also { it.write(source.readByteArray(length.toInt())) }.use { sourceBuffer ->
                 while (sourceBuffer.size > 0) {
-                    val tag = ASN1Element.ASN1Tag(source)
-                    val childLength = source.readASN1Length()
+                    val tag = ASN1Element.ASN1Tag(sourceBuffer)
+                    val childLength = sourceBuffer.readASN1Length()
                     val element = (tag.findFactory() ?: return Result.failure(IllegalArgumentException("Invalid tag $tag")))
-                        .fromData(source, childLength)
+                        .fromData(sourceBuffer, childLength)
                     if (element.isFailure) return Result.failure(requireNotNull(element.exceptionOrNull()))
                     children.add(element.getOrThrow())
                 }
             }
             return Result.success(createCollection(children))
         }
+
+        override fun wrap(value: ASN1Element): T = createCollection(mutableListOf(value))
     }
 }
 
@@ -70,8 +71,10 @@ sealed class ASN1Collection<T : ASN1Collection<T>>(
  * @since  30/12/2024
  */
 class ASN1Sequence(children: MutableList<ASN1Element>) : ASN1Collection<ASN1Sequence>(ASN1Sequence, children) {
-    constructor(vararg children: ASN1Element) : this(children.toMutableList())
-    companion object : Factory<ASN1Sequence>(ASN1Element.ASN1Tag.SEQUENCE, { ASN1Sequence(it) })
+    companion object : Factory<ASN1Sequence>(ASN1Element.ASN1Tag.SEQUENCE, { ASN1Sequence(it) }) {
+        @JvmStatic
+        fun of(vararg children: ASN1Element): ASN1Sequence = ASN1Sequence(children.toMutableList())
+    }
 }
 
 /**
@@ -79,6 +82,8 @@ class ASN1Sequence(children: MutableList<ASN1Element>) : ASN1Collection<ASN1Sequ
  * @since  30/12/2024
  */
 class ASN1Set(children: MutableList<ASN1Element>) : ASN1Collection<ASN1Set>(ASN1Set, children) {
-    constructor(vararg children: ASN1Element) : this(children.toMutableList())
-    companion object : Factory<ASN1Set>(ASN1Element.ASN1Tag.SET, { ASN1Set(it) })
+    companion object : Factory<ASN1Set>(ASN1Element.ASN1Tag.SET, { ASN1Set(it) }) {
+        @JvmStatic
+        fun of(vararg children: ASN1Element): ASN1Sequence = ASN1Sequence(children.toMutableList())
+    }
 }

@@ -16,12 +16,14 @@
 
 package de.cacheoverflow.krypton.asn1
 
+import de.cacheoverflow.krypton.asn1.ASN1PrintableString.Companion.readASN1Length
 import kotlinx.io.Buffer
 import kotlinx.io.Sink
 import kotlinx.io.Source
 import kotlinx.io.readByteArray
 import kotlin.jvm.JvmInline
 import kotlin.jvm.JvmStatic
+import kotlin.reflect.KClass
 
 
 /**
@@ -79,7 +81,8 @@ interface ASN1Element {
         inline fun isSequence(): Boolean = this == SEQUENCE
         inline fun isSet(): Boolean = this == SET
 
-        override fun toString(): String = "$identifier ($kind)"
+        @OptIn(ExperimentalStdlibApi::class)
+        override fun toString(): String = "0x${identifier.toHexString()} ($kind)"
         inline fun findFactory(): Factory<*>? = when(this) {
             NULL -> ASN1Null
             SET -> ASN1Set
@@ -88,6 +91,7 @@ interface ASN1Element {
             T61_STRING -> ASN1T61String
             IA5_STRING -> ASN1IA5String
             UTF8_STRING -> ASN1Utf8String
+            BIT_STRING -> ASN1BitString
             UTC_TIME -> ASN1UtcTime
             INTEGER -> ASN1Integer
             OBJECT_ID -> ObjectIdentifier
@@ -110,6 +114,30 @@ interface ASN1Element {
             @JvmStatic val IA5_STRING: ASN1Tag       = ASN1Tag(0x16, EnumTagKind.UNIVERSAL, false)
             @JvmStatic val UTC_TIME: ASN1Tag         = ASN1Tag(0x17, EnumTagKind.UNIVERSAL, false)
             // @formatter:on
+
+            @JvmStatic
+            fun fromClass(type: KClass<out ASN1Element>): ASN1Tag? = when(type) {
+                ASN1Integer::class -> INTEGER
+                ASN1BitString::class -> BIT_STRING
+                ASN1OctetString::class -> OCTET_STRING
+                ASN1Null::class -> NULL
+                ObjectIdentifier::class -> OBJECT_ID
+                ASN1Utf8String::class -> UTF8_STRING
+                ASN1Sequence::class -> SEQUENCE
+                ASN1Set::class -> SET
+                ASN1PrintableString::class -> PRINTABLE_STRING
+                ASN1T61String::class -> T61_STRING
+                ASN1IA5String::class -> IA5_STRING
+                ASN1UtcTime::class -> UTC_TIME
+                else -> null
+            }
+
+            @JvmStatic
+            fun read(source: Source): Result<ASN1Element> {
+                val tag = ASN1Tag(source)
+                val factory = requireNotNull(tag.findFactory()) { "Tag '$tag' is invalid" }
+                return factory.fromData(source, source.readASN1Length())
+            }
         }
     }
 
@@ -129,6 +157,8 @@ interface ASN1Element {
             val length = source.readASN1Length()
             return fromData(source, length)
         }
+
+        fun wrap(value: ASN1Element): T = throw UnsupportedOperationException("Unable to wrap element into '$tag'")
 
         fun Source.readASN1Length(): Long {
             val lengthByte = readByte().toInt()

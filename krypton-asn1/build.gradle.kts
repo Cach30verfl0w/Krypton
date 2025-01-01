@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
+
 /*
  * Copyright 2024 Cedric Hammes
  *
@@ -26,6 +28,15 @@ var projectJvmTarget = libs.versions.jvmTarget.get()
 configureAllTargets(projectJvmTarget)
 
 kotlin {
+    watchosSimulatorArm64()
+    watchosX64()
+    watchosArm32()
+    watchosArm64()
+    tvosSimulatorArm64()
+    tvosX64()
+    tvosArm64()
+    iosArm64()
+
     sourceSets {
         commonMain.dependencies {
             api(libs.kotlinx.serialization.core)

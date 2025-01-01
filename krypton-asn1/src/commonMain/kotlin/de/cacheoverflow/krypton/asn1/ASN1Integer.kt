@@ -33,6 +33,7 @@ class ASN1Integer(var value: BigInteger) : ASN1Element {
     constructor(value: Int) : this(BigInteger.fromInt(value))
     constructor(value: Long) : this(BigInteger.fromLong(value))
 
+    override fun toString(): String = value.toString()
     override fun asCollection(): ASN1Collection<*> =
         throw UnsupportedOperationException("Unable to convert integer to collection")
     override fun asString(): String =

@@ -16,6 +16,7 @@
 
 package de.cacheoverflow.krypton.asn1
 
+import kotlinx.io.Buffer
 import kotlinx.io.Sink
 import kotlinx.io.Source
 import kotlinx.io.readByteArray
@@ -24,7 +25,9 @@ import kotlinx.io.readByteArray
  * @author Cedric Hammes
  * @since  29/12/2024
  */
-class ASN1BitString(private val paddingBits: Byte, private val bitData: ByteArray) : ASN1Element {
+class ASN1BitString(private val paddingBits: Byte, private val bitData: ByteArray) : ASN1Element, ASN1ElementContainer {
+    constructor(bytes: ByteArray) : this(0, bytes)
+
     override fun write(sink: Sink) {
         sink.writeByte(tag.value)
         sink.writeASN1Length((bitData.size + 1).toLong())
@@ -34,6 +37,7 @@ class ASN1BitString(private val paddingBits: Byte, private val bitData: ByteArra
 
     // TODO: Implement bitset logic for bit string
 
+    override fun unwrap(): ASN1Element = TODO("Not yet implemented")
     override fun asCollection(): ASN1Collection<*> =
         throw UnsupportedOperationException("Unable to convert bit string to collection")
     override fun asString(): String =
@@ -46,5 +50,7 @@ class ASN1BitString(private val paddingBits: Byte, private val bitData: ByteArra
 
         override fun fromData(source: Source, length: Long): Result<ASN1BitString> =
             Result.success(ASN1BitString(source.readByte(), source.readByteArray(length.toInt() - 1)))
+
+        override fun wrap(value: ASN1Element): ASN1BitString = ASN1BitString(Buffer().also { value.write(it) }.use { it.readByteArray() })
     }
 }

@@ -18,6 +18,7 @@ package de.cacheoverflow.krypton.asn1
 
 import de.cacheoverflow.krypton.asn1.serialization.ASN1Decoder
 import de.cacheoverflow.krypton.asn1.serialization.ASN1Encoder
+import de.cacheoverflow.krypton.asn1.serialization.dropFirstOrThrow
 import kotlinx.io.*
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
@@ -38,7 +39,7 @@ class ObjectIdentifierSerializer : KSerializer<ObjectIdentifier> {
     }
 
     override fun deserialize(decoder: Decoder): ObjectIdentifier = when (decoder) {
-        is ASN1Decoder -> ObjectIdentifier.fromSource(decoder.source).getOrThrow()
+        is ASN1Decoder -> decoder.root.dropFirstOrThrow()
         else -> ObjectIdentifier(decoder.decodeString())
     }
 }

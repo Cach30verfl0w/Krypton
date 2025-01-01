@@ -71,7 +71,7 @@ class ASN1EncoderTests : ShouldSpec() {
             )
 
             assertEquals(
-                expected = "3103020101",
+                expected = "3003020101",
                 actual = ASN1Encoder.serialize(
                     value = TestStructure1(0x1),
                     serializationStrategy = TestStructure1.serializer()
@@ -104,15 +104,36 @@ class ASN1EncoderTests : ShouldSpec() {
             )
         }
         should("Kotlin class as sequence wrapped into another sequence") {
-            @Serializable
-            @WrappedInto(ASN1Sequence::class)
-            data class WrappedSequence(val value: Int)
-
-            @Serializable
-            class Wrapped(val value: WrappedSequence)
-
-            // TODO: Set with ASN1OctetString and ASN1BitString as container type
-            println(ASN1Encoder.serialize(Wrapped(WrappedSequence(0x1)), Wrapped.serializer()).toHexString())
+            run {
+                @Serializable
+                @WrappedInto(ASN1Sequence::class)
+                data class WrappedSequence(val value: Int)
+                assertEquals(
+                    expected = "30053003020101",
+                    actual = ASN1Encoder.serialize(WrappedSequence(0x1), WrappedSequence.serializer()).toHexString(),
+                    message = "Unable to encode ASN.1 sequence containing another ASN.1 sequence"
+                )
+            }
+            run {
+                @Serializable
+                @WrappedInto(ASN1OctetString::class)
+                data class WrappedSequence(val value: Int)
+                assertEquals(
+                    expected = "04053003020101",
+                    actual = ASN1Encoder.serialize(WrappedSequence(0x1), WrappedSequence.serializer()).toHexString(),
+                    message = "Unable to encode ASN.1 octet string containing another ASN.1 sequence"
+                )
+            }
+            run {
+                @Serializable
+                @WrappedInto(ASN1BitString::class)
+                data class WrappedSequence(val value: Int)
+                assertEquals(
+                    expected = "0306003003020101",
+                    actual = ASN1Encoder.serialize(WrappedSequence(0x1), WrappedSequence.serializer()).toHexString(),
+                    message = "Unable to encode ASN.1 bitstring containing another ASN.1 sequence"
+                )
+            }
         }
     }
 }

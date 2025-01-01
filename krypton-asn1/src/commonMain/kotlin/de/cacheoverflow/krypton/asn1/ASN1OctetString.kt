@@ -16,6 +16,7 @@
 
 package de.cacheoverflow.krypton.asn1
 
+import kotlinx.io.Buffer
 import kotlinx.io.Sink
 import kotlinx.io.Source
 import kotlinx.io.readByteArray
@@ -35,6 +36,7 @@ class ASN1OctetString(var data: ByteArray) : ASN1Element, ASN1ElementContainer {
     override fun unwrap(): ASN1Element = TODO("Deserialize element from source")
     override fun asCollection(): ASN1Collection<*> = // TODO: Try to parse into collection
         throw UnsupportedOperationException("Unable to convert octet string to collection")
+
     override fun asString(): String = data.decodeToString()
     override fun asAny(): Any = asString()
 
@@ -42,5 +44,8 @@ class ASN1OctetString(var data: ByteArray) : ASN1Element, ASN1ElementContainer {
         override val tag: ASN1Element.ASN1Tag = ASN1Element.ASN1Tag.OCTET_STRING
         override fun fromData(source: Source, length: Long): Result<ASN1OctetString> =
             Result.success(ASN1OctetString(source.readByteArray(length.toInt())))
+
+        override fun wrap(value: ASN1Element): ASN1OctetString =
+            ASN1OctetString(Buffer().also { value.write(it) }.use { it.readByteArray() })
     }
 }

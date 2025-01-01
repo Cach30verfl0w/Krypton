@@ -17,9 +17,8 @@
 package de.cacheoverflow.krypton.asn1.serialization
 
 import de.cacheoverflow.krypton.asn1.*
-import de.cacheoverflow.krypton.asn1.ASN1Null.writeASN1Length
+import de.cacheoverflow.krypton.asn1.annotation.ClassKind
 import kotlinx.io.Buffer
-import kotlinx.io.InternalIoApi
 import kotlinx.io.Sink
 import kotlinx.io.readByteArray
 import kotlinx.serialization.ExperimentalSerializationApi
@@ -31,17 +30,25 @@ import kotlinx.serialization.descriptors.StructureKind
 import kotlinx.serialization.encoding.CompositeEncoder
 import kotlinx.serialization.internal.TaggedEncoder
 import kotlin.jvm.JvmStatic
+import kotlin.reflect.KClass
 
 /**
  * @author Cedric Hammes
  * @since  01/01/2025
  */
 @OptIn(InternalSerializationApi::class, ExperimentalSerializationApi::class)
-class ASN1Encoder private constructor(private val parent: ASN1Sequence?) : TaggedEncoder<SerialASN1Tag>() {
-    internal val sequence: ASN1Sequence = ASN1Sequence()
+class ASN1Encoder private constructor(
+    private val parent: ASN1Collection<*>?,
+    type: KClass<out ASN1Collection<*>> = ASN1Sequence::class
+) : TaggedEncoder<SerialASN1Tag>() {
+    internal val sequence: ASN1Collection<*> = when(type) {
+        ASN1Sequence::class -> ASN1Sequence()
+        ASN1Set::class -> ASN1Set()
+        else -> throw IllegalArgumentException("$type is not supported")
+    }
 
+    // @formatter:off
     override fun SerialDescriptor.getTag(index: Int): SerialASN1Tag = SerialASN1Tag.fromDescriptor(this, index)
-
     override fun encodeTaggedNull(tag: SerialASN1Tag) { sequence += ASN1Null }
     override fun encodeTaggedByte(tag: SerialASN1Tag, value: Byte) { sequence += ASN1Integer(value) }
     override fun encodeTaggedShort(tag: SerialASN1Tag, value: Short) { sequence += ASN1Integer(value) }
@@ -56,6 +63,7 @@ class ASN1Encoder private constructor(private val parent: ASN1Sequence?) : Tagge
             else -> throw IllegalArgumentException("Unable to deserialize string (type ${kind?.qualifiedName?: "unknown"} not supported)")
         }
     }
+    // @formatter:on
 
     override fun endEncode(descriptor: SerialDescriptor) {
         parent?.add(sequence)
@@ -63,11 +71,11 @@ class ASN1Encoder private constructor(private val parent: ASN1Sequence?) : Tagge
 
     override fun beginStructure(descriptor: SerialDescriptor): CompositeEncoder {
         return when (descriptor.kind) {
-            StructureKind.CLASS -> ASN1Encoder(sequence) // TODO: Validate type of "collection"
+            StructureKind.CLASS -> ASN1Encoder(sequence, descriptor.findAnnotation<ClassKind>()?.value ?: ASN1Sequence::class)
             StructureKind.LIST -> ASN1Encoder(sequence) // TODO: Replace with specialized decoder
             else -> super.beginStructure(descriptor)
         }
-     }
+    }
 
     companion object {
         @JvmStatic

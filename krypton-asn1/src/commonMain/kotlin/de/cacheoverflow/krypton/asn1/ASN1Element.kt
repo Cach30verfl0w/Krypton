@@ -75,7 +75,9 @@ interface ASN1Element {
         inline val kind: EnumTagKind get() = EnumTagKind.byByte((value.toInt() shr 6).toByte())
         inline val constructed: Boolean get() = (value.toInt() shr 6) and 0b1 == 1
         inline val identifier: Byte get() = (value.toInt() and 0x1F).toByte()
-        inline fun isList(): Boolean = this == SET || this == SEQUENCE
+        inline fun isList(): Boolean = isSet() || isSequence()
+        inline fun isSequence(): Boolean = this == SEQUENCE
+        inline fun isSet(): Boolean = this == SET
 
         override fun toString(): String = "$identifier ($kind)"
         inline fun findFactory(): Factory<*>? = when(this) {

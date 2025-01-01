@@ -18,6 +18,7 @@ package de.cacheoverflow.krypton.asn1.serialization
 
 import de.cacheoverflow.krypton.asn1.*
 import de.cacheoverflow.krypton.asn1.ASN1IA5String.Companion.readASN1Length
+import de.cacheoverflow.krypton.asn1.annotation.ClassKind
 import kotlinx.io.Buffer
 import kotlinx.io.Source
 import kotlinx.serialization.DeserializationStrategy
@@ -63,8 +64,17 @@ class ASN1Decoder private constructor(internal val source: Source) : TaggedDecod
         val tag = ASN1Element.ASN1Tag(source)
         source.readASN1Length()
         val kind = descriptor.kind
+        val classKind = descriptor.findAnnotation<ClassKind>()?.value ?: ASN1Sequence::class
+
         return when {
-            kind == StructureKind.CLASS && tag == ASN1Element.ASN1Tag.SEQUENCE -> ASN1Decoder(source) // TODO: Validate type of "collection"
+            kind == StructureKind.CLASS && tag.isSequence() -> {
+                if (classKind != ASN1Sequence::class) throw IllegalArgumentException("Kind of class is not matching sequence")
+                ASN1Decoder(source)
+            }
+            kind == StructureKind.CLASS && tag.isSet() -> {
+                if (classKind != ASN1Set::class) throw IllegalArgumentException("Kind of class is not matching set")
+                ASN1Decoder(source)
+            }
             kind == StructureKind.LIST && tag.isList() -> ASN1Decoder(source) // TODO: Replace with specialized decoder
             else -> super.beginStructure(descriptor)
         }

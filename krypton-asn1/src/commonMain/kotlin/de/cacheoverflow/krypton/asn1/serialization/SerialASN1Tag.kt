@@ -22,6 +22,9 @@ import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlin.reflect.KClass
 
+@OptIn(ExperimentalSerializationApi::class)
+internal inline fun <reified T : Annotation> SerialDescriptor.findAnnotation(): T? = this.annotations.firstOrNull { it is T } as T?
+
 /**
  * @author Cedric Hammes
  * @since  01/01/2024

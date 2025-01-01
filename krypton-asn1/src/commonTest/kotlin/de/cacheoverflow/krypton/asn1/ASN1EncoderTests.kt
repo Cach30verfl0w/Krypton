@@ -16,6 +16,7 @@
 
 package de.cacheoverflow.krypton.asn1
 
+import de.cacheoverflow.krypton.asn1.annotation.ClassKind
 import de.cacheoverflow.krypton.asn1.annotation.StringKind
 import de.cacheoverflow.krypton.asn1.serialization.ASN1Encoder
 import io.kotest.core.spec.style.ShouldSpec
@@ -59,6 +60,22 @@ class ASN1EncoderTests : ShouldSpec() {
                 expected = "301c02010106092a864886f70d0101010c05546573743113055465737432",
                 actual = ASN1Encoder.serialize(structure, TestStructure.serializer()).toHexString(),
                 message = "Unable to encode ASN.1 sequence"
+            )
+        }
+        should("encode Kotlin class as set with sub-class into ASN1") {
+            @Serializable
+            @ClassKind(ASN1Set::class)
+            data class TestStructure1(
+                val value: Int?,
+            )
+
+            assertEquals(
+                expected = "3103020101",
+                actual = ASN1Encoder.serialize(
+                    value = TestStructure1(0x1),
+                    serializationStrategy = TestStructure1.serializer()
+                ).toHexString(),
+                message = "Unable to encode ASN.1 set"
             )
         }
         should("encode Kotlin class with sub-class into ASN1") {

@@ -16,6 +16,7 @@
 
 package de.cacheoverflow.krypton.asn1
 
+import de.cacheoverflow.krypton.asn1.annotation.ClassKind
 import de.cacheoverflow.krypton.asn1.annotation.StringKind
 import de.cacheoverflow.krypton.asn1.serialization.ASN1Decoder
 import de.cacheoverflow.krypton.asn1.serialization.ASN1Encoder
@@ -63,6 +64,22 @@ class ASN1DecoderTests : ShouldSpec() {
                     deserializationStrategy = TestStructure.serializer()
                 ),
                 message = "Unable to deserialize ASN.1 sequence"
+            )
+        }
+        should("decode Kotlin class as set with sub-class rom ASN1") {
+            @Serializable
+            @ClassKind(ASN1Set::class)
+            data class TestStructure1(
+                val value: Int?,
+            )
+
+            assertEquals(
+                expected = TestStructure1(0x1),
+                actual = ASN1Decoder.deserialize(
+                    source = "3103020101".hexToByteArray(),
+                    deserializationStrategy = TestStructure1.serializer()
+                ),
+                message = "Unable to encode ASN.1 set"
             )
         }
         should("decode Kotlin class with sub-class from ASN1") {

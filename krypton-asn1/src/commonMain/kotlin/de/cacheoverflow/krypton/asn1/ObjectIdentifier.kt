@@ -17,6 +17,7 @@
 package de.cacheoverflow.krypton.asn1
 
 import de.cacheoverflow.krypton.asn1.serialization.ASN1Decoder
+import de.cacheoverflow.krypton.asn1.serialization.ASN1Encoder
 import kotlinx.io.*
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
@@ -29,10 +30,11 @@ import kotlin.jvm.JvmStatic
 
 class ObjectIdentifierSerializer : KSerializer<ObjectIdentifier> {
     override val descriptor: SerialDescriptor =
-        PrimitiveSerialDescriptor(requireNotNull(ObjectIdentifier::class.qualifiedName), PrimitiveKind.BYTE)
+        PrimitiveSerialDescriptor(requireNotNull(ObjectIdentifier::class.qualifiedName), PrimitiveKind.STRING)
 
-    override fun serialize(encoder: Encoder, value: ObjectIdentifier) {
-        TODO("Not yet implemented $encoder")
+    override fun serialize(encoder: Encoder, value: ObjectIdentifier) = when(encoder) {
+        is ASN1Encoder -> encoder.sequence += value
+        else -> encoder.encodeString(value.toString())
     }
 
     override fun deserialize(decoder: Decoder): ObjectIdentifier = when (decoder) {

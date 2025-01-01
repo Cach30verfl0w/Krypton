@@ -18,7 +18,6 @@ package de.cacheoverflow.krypton.asn1.serialization
 
 import de.cacheoverflow.krypton.asn1.*
 import de.cacheoverflow.krypton.asn1.ASN1IA5String.Companion.readASN1Length
-import de.cacheoverflow.krypton.asn1.annotation.StringKind
 import kotlinx.io.Buffer
 import kotlinx.io.Source
 import kotlinx.serialization.DeserializationStrategy
@@ -29,31 +28,30 @@ import kotlinx.serialization.descriptors.StructureKind
 import kotlinx.serialization.encoding.CompositeDecoder
 import kotlinx.serialization.internal.TaggedDecoder
 import kotlin.jvm.JvmStatic
-import kotlin.reflect.KClass
 
 /**
  * @author Cedric Hammes
  * @since  31/12/2024
  */
 @OptIn(InternalSerializationApi::class, ExperimentalSerializationApi::class)
-class ASN1Decoder private constructor(internal val source: Source) : TaggedDecoder<ASN1Decoder.ElementTag>(), AutoCloseable {
+class ASN1Decoder private constructor(internal val source: Source) : TaggedDecoder<SerialASN1Tag>() {
     private var currentIndex: Int = 0
-    override fun SerialDescriptor.getTag(index: Int): ElementTag = ElementTag.fromDescriptor(this, index)
+    override fun SerialDescriptor.getTag(index: Int): SerialASN1Tag = SerialASN1Tag.fromDescriptor(this, index)
     override fun decodeElementIndex(descriptor: SerialDescriptor): Int =
         if (descriptor.elementsCount == currentIndex) CompositeDecoder.DECODE_DONE else currentIndex++
 
-    override fun decodeTaggedByte(tag: ElementTag): Byte = ASN1Integer.fromSource(source).getOrThrow().asByte()
-    override fun decodeTaggedShort(tag: ElementTag): Short = ASN1Integer.fromSource(source).getOrThrow().asShort()
-    override fun decodeTaggedInt(tag: ElementTag): Int = ASN1Integer.fromSource(source).getOrThrow().asInt()
-    override fun decodeTaggedLong(tag: ElementTag): Long = ASN1Integer.fromSource(source).getOrThrow().asLong()
-    override fun decodeTaggedString(tag: ElementTag): String = when (val kind = tag.stringKind) {
+    override fun decodeTaggedByte(tag: SerialASN1Tag): Byte = ASN1Integer.fromSource(source).getOrThrow().asByte()
+    override fun decodeTaggedShort(tag: SerialASN1Tag): Short = ASN1Integer.fromSource(source).getOrThrow().asShort()
+    override fun decodeTaggedInt(tag: SerialASN1Tag): Int = ASN1Integer.fromSource(source).getOrThrow().asInt()
+    override fun decodeTaggedLong(tag: SerialASN1Tag): Long = ASN1Integer.fromSource(source).getOrThrow().asLong()
+    override fun decodeTaggedString(tag: SerialASN1Tag): String = when (val kind = tag.stringKind) {
         ASN1Utf8String::class -> ASN1Utf8String.fromSource(source)
         ASN1PrintableString::class -> ASN1PrintableString.fromSource(source)
         ASN1T61String::class -> ASN1T61String.fromSource(source)
         ASN1IA5String::class -> ASN1IA5String.fromSource(source)
-        else -> throw IllegalArgumentException("Unable to deserialize string (type ${kind?.qualifiedName ?: "eaea"} not supported)")
+        else -> throw IllegalArgumentException("Unable to deserialize string (type ${kind?.qualifiedName?: "unknown"} not supported)")
     }.getOrThrow().asString()
-    override fun decodeTaggedNotNullMark(tag: ElementTag): Boolean {
+    override fun decodeTaggedNotNullMark(tag: SerialASN1Tag): Boolean {
         if (ASN1Element.ASN1Tag(source.peek()) == ASN1Element.ASN1Tag.NULL) {
             ASN1Null.fromSource(source)
             return false
@@ -69,22 +67,6 @@ class ASN1Decoder private constructor(internal val source: Source) : TaggedDecod
             kind == StructureKind.CLASS && tag == ASN1Element.ASN1Tag.SEQUENCE -> ASN1Decoder(source) // TODO: Validate type of "collection"
             kind == StructureKind.LIST && tag.isList() -> ASN1Decoder(source) // TODO: Replace with specialized decoder
             else -> super.beginStructure(descriptor)
-        }
-    }
-
-    override fun close() = source.close()
-
-    /**
-     * @author Cedric Hammes
-     * @since  01/01/2024
-     */
-    class ElementTag private constructor(internal val stringKind: KClass<out ASN1String<*>>?) {
-        companion object {
-            private inline fun <reified T : Annotation> SerialDescriptor.findAnnotation(index: Int): T? =
-                getElementAnnotations(index).firstOrNull { it is T } as T?
-
-            internal fun fromDescriptor(descriptor: SerialDescriptor, index: Int): ElementTag =
-                ElementTag(descriptor.findAnnotation<StringKind>(index)?.value)
         }
     }
 

@@ -19,6 +19,7 @@ package de.cacheoverflow.krypton.asn1.serialization
 import de.cacheoverflow.krypton.asn1.*
 import de.cacheoverflow.krypton.asn1.ASN1IA5String.Companion.readASN1Length
 import de.cacheoverflow.krypton.asn1.annotation.ClassKind
+import de.cacheoverflow.krypton.asn1.annotation.WrappedInto
 import kotlinx.io.Buffer
 import kotlinx.io.Source
 import kotlinx.serialization.DeserializationStrategy
@@ -61,22 +62,32 @@ class ASN1Decoder private constructor(internal val source: Source) : TaggedDecod
     }
 
     override fun beginStructure(descriptor: SerialDescriptor): CompositeDecoder {
-        val tag = ASN1Element.ASN1Tag(source)
-        source.readASN1Length()
-        val kind = descriptor.kind
-        val classKind = descriptor.findAnnotation<ClassKind>()?.value ?: ASN1Sequence::class
+        fun beginStructure0(): CompositeDecoder {
+            val tag = ASN1Element.ASN1Tag(source)
+            source.readASN1Length()
+            val kind = descriptor.kind
+            val classKind = descriptor.findAnnotation<ClassKind>()?.value ?: ASN1Sequence::class
+            return when {
+                kind == StructureKind.CLASS && tag.isSequence() -> {
+                    if (classKind != ASN1Sequence::class) throw IllegalArgumentException("Kind of class is not matching sequence")
+                    ASN1Decoder(source)
+                }
+                kind == StructureKind.CLASS && tag.isSet() -> {
+                    if (classKind != ASN1Set::class) throw IllegalArgumentException("Kind of class is not matching set")
+                    ASN1Decoder(source)
+                }
+                kind == StructureKind.LIST && tag.isList() -> ASN1Decoder(source) // TODO: Replace with specialized decoder
+                else -> super.beginStructure(descriptor)
+            }
+        }
 
-        return when {
-            kind == StructureKind.CLASS && tag.isSequence() -> {
-                if (classKind != ASN1Sequence::class) throw IllegalArgumentException("Kind of class is not matching sequence")
-                ASN1Decoder(source)
+        return when (descriptor.findAnnotation<WrappedInto>()?.value) {
+            null -> beginStructure0()
+            else -> {
+                ASN1Element.ASN1Tag(source) // TODO: Validate containter type tag
+                source.readASN1Length()
+                beginStructure0()
             }
-            kind == StructureKind.CLASS && tag.isSet() -> {
-                if (classKind != ASN1Set::class) throw IllegalArgumentException("Kind of class is not matching set")
-                ASN1Decoder(source)
-            }
-            kind == StructureKind.LIST && tag.isList() -> ASN1Decoder(source) // TODO: Replace with specialized decoder
-            else -> super.beginStructure(descriptor)
         }
     }
 

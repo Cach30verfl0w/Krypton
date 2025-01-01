@@ -146,6 +146,14 @@ interface ASN1Element {
     }
 }
 
+/**
+ * @author Cedric Hammes
+ * @since  01/01/2024
+ */
+sealed interface ASN1ElementContainer : ASN1Element {
+    fun unwrap(): ASN1Element
+}
+
 inline fun ASN1Element.asSequence(): ASN1Sequence = when(val collection = asCollection()) {
     is ASN1Sequence -> this as ASN1Sequence
     is ASN1Set -> ASN1Sequence(collection.children)

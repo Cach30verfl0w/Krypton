@@ -18,8 +18,8 @@ package de.cacheoverflow.krypton.asn1
 
 import de.cacheoverflow.krypton.asn1.annotation.ClassKind
 import de.cacheoverflow.krypton.asn1.annotation.StringKind
+import de.cacheoverflow.krypton.asn1.annotation.WrappedInto
 import de.cacheoverflow.krypton.asn1.serialization.ASN1Decoder
-import de.cacheoverflow.krypton.asn1.serialization.ASN1Encoder
 import io.kotest.core.spec.style.ShouldSpec
 import kotlinx.serialization.Serializable
 import kotlin.test.assertEquals
@@ -36,7 +36,7 @@ class ASN1DecoderTests : ShouldSpec() {
             @StringKind(ASN1PrintableString::class) val value2: String
         )
 
-        should("decode Kotlin class from ASN1 with null") {
+        should("Kotlin class from ASN1 with null") {
             assertEquals(
                 expected = TestStructure(
                     value = null,
@@ -51,7 +51,7 @@ class ASN1DecoderTests : ShouldSpec() {
                 message = "Unable to deserialize ASN.1 sequence"
             )
         }
-        should("decode Kotlin class from ASN1 without null") {
+        should("Kotlin class from ASN1 without null") {
             assertEquals(
                 expected = TestStructure(
                     value = 0x1,
@@ -66,7 +66,7 @@ class ASN1DecoderTests : ShouldSpec() {
                 message = "Unable to deserialize ASN.1 sequence"
             )
         }
-        should("decode Kotlin class as set with sub-class rom ASN1") {
+        should("Kotlin class as set with sub-class rom ASN1") {
             @Serializable
             @ClassKind(ASN1Set::class)
             data class TestStructure1(
@@ -82,7 +82,7 @@ class ASN1DecoderTests : ShouldSpec() {
                 message = "Unable to encode ASN.1 set"
             )
         }
-        should("decode Kotlin class with sub-class from ASN1") {
+        should("Kotlin class with sub-class from ASN1") {
             @Serializable
             data class TestStructure1(
                 val value: Int?,
@@ -102,6 +102,21 @@ class ASN1DecoderTests : ShouldSpec() {
                 actual = ASN1Decoder.deserialize(
                     source = "3021020101301c02010106092a864886f70d0101010c05546573743113055465737432".hexToByteArray(),
                     deserializationStrategy = TestStructure1.serializer()
+                ),
+                message = "Unable to decode ASN.1 sequence containing another ASN.1 sequence"
+            )
+        }
+        should("Kotlin class as sequence wrapped in another sequence") {
+            @Serializable
+            @WrappedInto(ASN1Sequence::class)
+            data class WrappedSequence(val value: Int)
+
+            // TODO: Set with ASN1OctetString and ASN1BitString as container type
+            assertEquals(
+                expected = WrappedSequence(0x1),
+                actual = ASN1Decoder.deserialize(
+                    source = "30053003020101".hexToByteArray(),
+                    deserializationStrategy = WrappedSequence.serializer()
                 ),
                 message = "Unable to decode ASN.1 sequence containing another ASN.1 sequence"
             )

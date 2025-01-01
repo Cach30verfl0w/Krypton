@@ -18,6 +18,7 @@ package de.cacheoverflow.krypton.asn1
 
 import de.cacheoverflow.krypton.asn1.annotation.ClassKind
 import de.cacheoverflow.krypton.asn1.annotation.StringKind
+import de.cacheoverflow.krypton.asn1.annotation.WrappedInto
 import de.cacheoverflow.krypton.asn1.serialization.ASN1Encoder
 import io.kotest.core.spec.style.ShouldSpec
 import kotlinx.serialization.Serializable
@@ -34,7 +35,7 @@ class ASN1EncoderTests : ShouldSpec() {
             @StringKind(ASN1PrintableString::class) val value2: String
         )
 
-        should("encode Kotlin class into ASN1 with null") {
+        should("Kotlin class into ASN1 with null") {
             val structure = TestStructure(
                 value = null,
                 identifier = ObjectIdentifier("1.2.840.113549.1.1.1"),
@@ -48,7 +49,7 @@ class ASN1EncoderTests : ShouldSpec() {
                 message = "Unable to encode ASN.1 sequence"
             )
         }
-        should("encode Kotlin class into ASN1 without null") {
+        should("Kotlin class into ASN1 without null") {
             val structure = TestStructure(
                 value = 0x1,
                 identifier = ObjectIdentifier("1.2.840.113549.1.1.1"),
@@ -62,7 +63,7 @@ class ASN1EncoderTests : ShouldSpec() {
                 message = "Unable to encode ASN.1 sequence"
             )
         }
-        should("encode Kotlin class as set with sub-class into ASN1") {
+        should("Kotlin class as set with sub-class into ASN1") {
             @Serializable
             @ClassKind(ASN1Set::class)
             data class TestStructure1(
@@ -78,7 +79,7 @@ class ASN1EncoderTests : ShouldSpec() {
                 message = "Unable to encode ASN.1 set"
             )
         }
-        should("encode Kotlin class with sub-class into ASN1") {
+        should("Kotlin class with sub-class into ASN1") {
             @Serializable
             data class TestStructure1(
                 val value: Int?,
@@ -101,6 +102,17 @@ class ASN1EncoderTests : ShouldSpec() {
                 ).toHexString(),
                 message = "Unable to encode ASN.1 sequence containing another ASN.1 sequence"
             )
+        }
+        should("Kotlin class as sequence wrapped into another sequence") {
+            @Serializable
+            @WrappedInto(ASN1Sequence::class)
+            data class WrappedSequence(val value: Int)
+
+            @Serializable
+            class Wrapped(val value: WrappedSequence)
+
+            // TODO: Set with ASN1OctetString and ASN1BitString as container type
+            println(ASN1Encoder.serialize(Wrapped(WrappedSequence(0x1)), Wrapped.serializer()).toHexString())
         }
     }
 }

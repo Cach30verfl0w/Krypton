@@ -19,6 +19,7 @@ package de.cacheoverflow.krypton.asn1
 import kotlinx.io.Buffer
 import kotlinx.io.Sink
 import kotlinx.io.Source
+import kotlinx.io.readByteArray
 
 /**
  * @author Cedric Hammes
@@ -28,7 +29,7 @@ import kotlinx.io.Source
 sealed class ASN1Collection<T : ASN1Collection<T>>(
     private val factory: ASN1Element.Factory<T>,
     val children: MutableList<ASN1Element>
-) : ASN1Element, MutableList<ASN1Element> by children {
+) : ASN1Element, ASN1ElementContainer, MutableList<ASN1Element> by children {
     override fun write(sink: Sink) {
         sink.writeByte(factory.tag.value)
         Buffer().also { buffer -> children.forEach { it.write(buffer) } }.use { buffer ->
@@ -37,6 +38,7 @@ sealed class ASN1Collection<T : ASN1Collection<T>>(
         }
     }
 
+    override fun unwrap(): ASN1Element = children[0]
     override fun asCollection(): ASN1Collection<*> = this
     override fun asString(): String = throw UnsupportedOperationException("Unable to convert collection to string")
     override fun asAny(): Any = children
@@ -46,7 +48,19 @@ sealed class ASN1Collection<T : ASN1Collection<T>>(
         private val createCollection: (MutableList<ASN1Element>) -> T
     ) : ASN1Element.Factory<T> {
         override fun fromData(source: Source, length: Long): Result<T> {
-            TODO("Read children")
+            val children = mutableListOf<ASN1Element>()
+            // TODO: Remove buffer creation
+            Buffer().also { it.write(source.readByteArray(length.toInt())) }.use { sourceBuffer ->
+                while (sourceBuffer.size > 0) {
+                    val tag = ASN1Element.ASN1Tag(source)
+                    val childLength = source.readASN1Length()
+                    val element = (tag.findFactory() ?: return Result.failure(IllegalArgumentException("Invalid tag $tag")))
+                        .fromData(source, childLength)
+                    if (element.isFailure) return Result.failure(requireNotNull(element.exceptionOrNull()))
+                    children.add(element.getOrThrow())
+                }
+            }
+            return Result.success(createCollection(children))
         }
     }
 }

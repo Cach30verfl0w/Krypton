@@ -25,13 +25,14 @@ import kotlinx.io.readByteArray
  * @since  29/12/2024
  */
 @Suppress("MemberVisibilityCanBePrivate")
-class ASN1OctetString(var data: ByteArray) : ASN1Element {
+class ASN1OctetString(var data: ByteArray) : ASN1Element, ASN1ElementContainer {
     override fun write(sink: Sink) {
         sink.writeByte(tag.value)
         sink.writeASN1Length(data.size.toLong())
         sink.write(data)
     }
 
+    override fun unwrap(): ASN1Element = TODO("Deserialize element from source")
     override fun asCollection(): ASN1Collection<*> = // TODO: Try to parse into collection
         throw UnsupportedOperationException("Unable to convert octet string to collection")
     override fun asString(): String = data.decodeToString()

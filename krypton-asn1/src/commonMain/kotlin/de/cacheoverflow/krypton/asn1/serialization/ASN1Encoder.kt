@@ -17,7 +17,9 @@
 package de.cacheoverflow.krypton.asn1.serialization
 
 import de.cacheoverflow.krypton.asn1.*
+import de.cacheoverflow.krypton.asn1.ASN1IA5String.Companion.readASN1Length
 import de.cacheoverflow.krypton.asn1.annotation.ClassKind
+import de.cacheoverflow.krypton.asn1.annotation.WrappedInto
 import kotlinx.io.Buffer
 import kotlinx.io.Sink
 import kotlinx.io.readByteArray
@@ -70,10 +72,15 @@ class ASN1Encoder private constructor(
     }
 
     override fun beginStructure(descriptor: SerialDescriptor): CompositeEncoder {
-        return when (descriptor.kind) {
+        fun beginStructure0(): CompositeEncoder = when (descriptor.kind) {
             StructureKind.CLASS -> ASN1Encoder(sequence, descriptor.findAnnotation<ClassKind>()?.value ?: ASN1Sequence::class)
             StructureKind.LIST -> ASN1Encoder(sequence) // TODO: Replace with specialized decoder
             else -> super.beginStructure(descriptor)
+        }
+
+        return when (val containerType = descriptor.findAnnotation<WrappedInto>()?.value) {
+            null -> beginStructure0()
+            else -> TODO("Structure wrapped into containerType")
         }
     }
 

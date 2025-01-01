@@ -21,7 +21,6 @@ import de.cacheoverflow.krypton.asn1.ASN1IA5String.Companion.readASN1Length
 import de.cacheoverflow.krypton.asn1.annotation.StringKind
 import kotlinx.io.Buffer
 import kotlinx.io.Source
-import kotlinx.io.readByteArray
 import kotlinx.serialization.DeserializationStrategy
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.InternalSerializationApi
@@ -64,7 +63,7 @@ class ASN1Decoder private constructor(internal val source: Source) : TaggedDecod
 
     override fun beginStructure(descriptor: SerialDescriptor): CompositeDecoder {
         val tag = ASN1Element.ASN1Tag(source)
-        val length = source.readASN1Length()
+        source.readASN1Length()
         val kind = descriptor.kind
         return when {
             kind == StructureKind.CLASS && tag == ASN1Element.ASN1Tag.SEQUENCE -> ASN1Decoder(source) // TODO: Validate type of "collection"

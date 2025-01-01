@@ -22,7 +22,7 @@ import kotlin.jvm.JvmStatic
  * @author Cedric Hammes
  * @since  29/12/2024
  */
-enum class EnumTagClass(private val literal: String, val value: Byte) {
+enum class EnumTagKind(private val literal: String, val value: Byte) {
     UNIVERSAL("Universal", 0x00),
     APPLICATION("Application", 0x01),
     CONTEXT_SPECIFIC("Context-Specific", 0x02),
@@ -33,6 +33,6 @@ enum class EnumTagClass(private val literal: String, val value: Byte) {
 
     companion object {
         @JvmStatic
-        fun byByte(value: Byte): EnumTagClass = EnumTagClass.entries.firstOrNull { it.value == value } ?: UNKNOWN
+        fun byByte(value: Byte): EnumTagKind = EnumTagKind.entries.firstOrNull { it.value == value } ?: UNKNOWN
     }
 }

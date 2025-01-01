@@ -14,14 +14,13 @@
  * limitations under the License.
  */
 
-package de.cacheoverflow.krypton.asn1.element
+package de.cacheoverflow.krypton.asn1
 
-import de.cacheoverflow.krypton.asn1.EnumTagClass
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.format.DateTimeFormat
 import kotlinx.datetime.format.char
-import kotlinx.io.Buffer
 import kotlinx.io.Sink
+import kotlinx.io.Source
 import kotlinx.io.readByteArray
 import kotlin.jvm.JvmStatic
 
@@ -29,19 +28,25 @@ import kotlin.jvm.JvmStatic
  * @author Cedric Hammes
  * @since  29/12/2024
  */
-@Suppress("MemberVisibilityCanBePrivate")
-class ASN1UTCTime(var value: LocalDateTime) : ASN1Element {
+@Suppress("MemberVisibilityCanBePrivate", "Unused")
+class ASN1UtcTime(var value: LocalDateTime) : ASN1Element {
+    constructor(value: String) : this(TIME_FORMAT.parse(value))
 
     override fun write(sink: Sink) {
-        sink.writeByte(tag)
+        sink.writeByte(tag.value)
         val data = TIME_FORMAT.format(value).encodeToByteArray()
         sink.writeASN1Length(data.size.toLong())
         sink.write(data)
     }
 
-    override fun toString(): String = "UTCTime(${value})"
+    override fun asCollection(): ASN1Collection<*> =
+        throw UnsupportedOperationException("Unable to convert UTC time to collection")
+    override fun asString(): String =
+        throw UnsupportedOperationException("Unable to convert UTC time to string")
+    override fun asAny(): Any = value
 
-    companion object : ASN1ElementFactory<ASN1UTCTime> {
+    companion object : ASN1Element.Factory<ASN1UtcTime> {
+        override val tag: ASN1Element.ASN1Tag = ASN1Element.ASN1Tag.UTC_TIME
         @JvmStatic val TIME_FORMAT: DateTimeFormat<LocalDateTime> = LocalDateTime.Format {
             yearTwoDigits(2000)
             monthNumber()
@@ -52,17 +57,8 @@ class ASN1UTCTime(var value: LocalDateTime) : ASN1Element {
             char('Z')
         }
 
-        // @formatter:off
-        @JvmStatic override val tagClass: EnumTagClass = EnumTagClass.UNIVERSAL
-        @JvmStatic override val tagType: Byte = 0x17
-        @JvmStatic override val isConstructed: Boolean = false
-        // @formatter:on
-
         @JvmStatic
-        override fun fromData(context: ASN1ParserContext, elementData: Buffer): Result<ASN1UTCTime> =
-            Result.success(ASN1UTCTime(TIME_FORMAT.parse(elementData.readByteArray().decodeToString())))
-
-        @JvmStatic
-        fun fromString(value: String): ASN1UTCTime = ASN1UTCTime(TIME_FORMAT.parse(value))
+        override fun fromData(source: Source, length: Long): Result<ASN1UtcTime> =
+            Result.success(ASN1UtcTime(TIME_FORMAT.parse(source.readByteArray(length.toInt()).decodeToString())))
     }
 }

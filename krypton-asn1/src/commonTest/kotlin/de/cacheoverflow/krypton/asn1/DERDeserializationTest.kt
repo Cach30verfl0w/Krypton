@@ -16,69 +16,37 @@
 
 package de.cacheoverflow.krypton.asn1
 
-import de.cacheoverflow.krypton.asn1.element.*
+import de.cacheoverflow.krypton.asn1.annotation.StringKind
+import de.cacheoverflow.krypton.asn1.serialization.ASN1Decoder
 import io.kotest.core.spec.style.ShouldSpec
 import kotlinx.io.Buffer
-import kotlinx.io.buffered
-import kotlinx.io.files.Path
-import kotlinx.io.files.SystemFileSystem
-import kotlinx.io.readByteArray
-import kotlin.io.encoding.Base64
-import kotlin.io.encoding.ExperimentalEncodingApi
-import kotlin.test.assertTrue
+import kotlinx.serialization.Serializable
+import kotlin.test.assertEquals
 
-@OptIn(ExperimentalEncodingApi::class, ExperimentalStdlibApi::class)
+@OptIn(ExperimentalStdlibApi::class)
 class DERDeserializationTest : ShouldSpec() {
     init {
-        should("read and re-write ASN1-encoded keystore") {
-            SystemFileSystem.source(Path("src/commonTest/resources/keystore.jks")).buffered().use { source ->
-                val readData = source.peek().use { it.readByteArray() }
-                val sequence = ASN1ParserContext.default().readObject(readData).getOrThrow()
-                val wroteData = Buffer().also { sequence.write(it) }.use { it.readByteArray() }
+        should("deserialize hex string into kotlin class") {
+            @Serializable
+            data class TestStructure(
+                val value: Int,
+                val identifier: ObjectIdentifier,
+                @StringKind(ASN1Utf8String::class) val value1: String,
+                @StringKind(ASN1PrintableString::class) val value2: String
+            )
 
-                println("Read:  ${readData.toHexString()}")
-                println("Wrote: ${wroteData.toHexString()}")
-                println()
-                writeStructure(0, sequence)
-                println()
-                assertTrue(wroteData.contentEquals(readData), "Unable to replicate data by re-writing read data")
-            }
+            assertEquals(
+                expected = TestStructure(
+                    value = 0x1,
+                    identifier = ObjectIdentifier("1.2.840.113549.1.1.1"),
+                    value1 = "Test1",
+                    value2 = "Test2"
+                ),
+                actual = Buffer()
+                    .also { it.write("301c02010106092a864886f70d0101010c05546573743113055465737432".hexToByteArray()) }
+                    .use { ASN1Decoder.deserialize(it, TestStructure.serializer()) },
+                message = "Unable to deserialize ASN.1 sequence"
+            )
         }
-        should("read and re-write ASN1-encoded certificate") {
-            SystemFileSystem.source(Path("src/commonTest/resources/certificate.pem")).buffered().use { source ->
-                val lines = source.readByteArray().decodeToString().lines()
-                val data = Base64.decode(lines.subList(1, lines.size - 2).joinToString(""))
-                val sequence = ASN1ParserContext.default().readObject(data).getOrThrow()
-                val wroteData = Buffer().also { sequence.write(it) }.use { it.readByteArray() }
-
-                println("Read:  ${data.toHexString()}")
-                println("Wrote: ${wroteData.toHexString()}")
-                println()
-                writeStructure(0, sequence)
-                println()
-                println(data.toHexString() == wroteData.toHexString())
-                assertTrue(wroteData.contentEquals(data), "Unable to replicate data by re-writing read data")
-            }
-        }
-    }
-
-    private fun writeStructure(level: Int, element: ASN1Element): Unit = when(element) {
-        is ASN1Sequence -> {
-            println("${"\t".repeat(level)} Sequence (${element.children.size}):")
-            for (child in element.children) {
-                writeStructure(level + 1, child)
-            }
-        }
-        is ASN1Set -> {
-            println("${"\t".repeat(level)} Set (${element.children.size}):")
-            for (child in element.children) {
-                writeStructure(level + 1, child)
-            }
-        }
-        is ASN1ContextSpecific -> {
-            println("${"\t".repeat(level)} Context-specific:")
-            writeStructure(level + 1, element.element)
-        }
-        else -> println("${"\t".repeat(level)} $element")
     }
 }

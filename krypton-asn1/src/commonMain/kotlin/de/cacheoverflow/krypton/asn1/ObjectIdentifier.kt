@@ -14,37 +14,51 @@
  * limitations under the License.
  */
 
-package de.cacheoverflow.krypton.asn1.element
+package de.cacheoverflow.krypton.asn1
 
-import de.cacheoverflow.krypton.asn1.EnumTagClass
-import kotlinx.io.Buffer
-import kotlinx.io.Sink
-import kotlin.jvm.JvmInline
+import de.cacheoverflow.krypton.asn1.serialization.ASN1Decoder
+import kotlinx.io.*
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.descriptors.PrimitiveKind
+import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 import kotlin.jvm.JvmStatic
+
+class ObjectIdentifierSerializer : KSerializer<ObjectIdentifier> {
+    override val descriptor: SerialDescriptor =
+        PrimitiveSerialDescriptor(requireNotNull(ObjectIdentifier::class.qualifiedName), PrimitiveKind.BYTE)
+
+    override fun serialize(encoder: Encoder, value: ObjectIdentifier) {
+        TODO("Not yet implemented $encoder")
+    }
+
+    override fun deserialize(decoder: Decoder): ObjectIdentifier = when (decoder) {
+        is ASN1Decoder -> ObjectIdentifier.fromSource(decoder.source).getOrNull()!!
+        else -> ObjectIdentifier(decoder.decodeString())
+    }
+}
 
 /**
  * This element is representing an object identifier, a worldwide unique identifier referencing objects, concepts etc. standardized by the
  * [International Telecommunication Union](https://en.wikipedia.org/wiki/International_Telecommunication_Union).
+ *
+ * TODO: Add validation
  *
  * @param parts An array list containing the integer parts separated by a dot
  *
  * @author Cedric Hammes
  * @since  29/12/2024
  */
-@JvmInline
-@Suppress("MemberVisibilityCanBePrivate", "Unused")
-value class ObjectIdentifier private constructor(val parts: List<Int>) : ASN1Element {
-
-    /**
-     * @param value String-formatted dot-separated representation of an object identifier
-     *
-     * @author Cedric Hammes
-     * @since  30/12/2024
-     */
+@Suppress("Unused")
+@Serializable(with = ObjectIdentifierSerializer::class)
+class ObjectIdentifier private constructor(private val parts: List<Int>) : ASN1Element {
     constructor(value: String) : this(value.split(".").map { it.toInt() })
 
     override fun write(sink: Sink) {
-        sink.writeByte(tag)
+        sink.writeByte(tag.value)
 
         // Write OID and length into sink
         val buffer = Buffer()
@@ -68,25 +82,34 @@ value class ObjectIdentifier private constructor(val parts: List<Int>) : ASN1Ele
         }
     }
 
+    override fun equals(other: Any?): Boolean = when(other) {
+        is ObjectIdentifier -> parts == other.parts
+        else -> false
+    }
+
+    override fun asCollection(): ASN1Collection<*> =
+        throw UnsupportedOperationException("Unable to convert object identifier to collection")
+    override fun asString(): String =
+        throw UnsupportedOperationException("Unable to convert object identifier to string")
+    override fun asAny(): Any = this
     override fun toString(): String = parts.joinToString(".")
 
-    companion object : ASN1ElementFactory<ObjectIdentifier> {
-        // @formatter:off
-        @JvmStatic override val tagClass: EnumTagClass = EnumTagClass.UNIVERSAL
-        @JvmStatic override val tagType: Byte = 6
-        @JvmStatic override val isConstructed: Boolean = false
-        // @formatter:on
+    companion object : ASN1Element.Factory<ObjectIdentifier> {
+        override val tag: ASN1Element.ASN1Tag = ASN1Element.ASN1Tag.OBJECT_ID
 
         @JvmStatic
-        override fun fromData(context: ASN1ParserContext, elementData: Buffer): Result<ObjectIdentifier> {
-            val firstByte = elementData.readByte()
+        override fun fromData(source: Source, length: Long): Result<ObjectIdentifier> {
+            val firstByte = source.readByte()
             val parts = mutableListOf(firstByte / 40, firstByte % 40)
-            while (elementData.size > 0) {
+            var remaining = length - 1
+            while (remaining > 0) {
                 var value = 0
                 var byte: Int
+
                 do {
-                    byte = elementData.readByte().toInt() and 0xFF
+                    byte = source.readByte().toInt() and 0xFF
                     value = (value shl 7) or (byte and 0x7F)
+                    remaining--
                 } while (byte and 0x80 != 0)
                 parts.add(value)
             }

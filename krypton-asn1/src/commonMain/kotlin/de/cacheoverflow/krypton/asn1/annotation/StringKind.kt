@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Cedric Hammes
+ * Copyright 2025 Cedric Hammes
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,19 @@
  * limitations under the License.
  */
 
-package de.cacheoverflow.krypton.asn1.exception
+package de.cacheoverflow.krypton.asn1.annotation
 
-sealed class ASN1Exception(message: String) : Exception(message)
-class ASN1InvalidTagException(message: String) : ASN1Exception(message)
+import de.cacheoverflow.krypton.asn1.ASN1String
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.SerialInfo
+import kotlin.reflect.KClass
+
+/**
+ * @author Cedric Hammes
+ * @since  01/01/2024
+ */
+@SerialInfo
+@Retention(AnnotationRetention.RUNTIME)
+@OptIn(ExperimentalSerializationApi::class)
+@Target(AnnotationTarget.PROPERTY, AnnotationTarget.FIELD)
+annotation class StringKind(val value: KClass<out ASN1String<*>>)

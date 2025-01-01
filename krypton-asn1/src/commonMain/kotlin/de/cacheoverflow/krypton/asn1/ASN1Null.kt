@@ -14,27 +14,28 @@
  * limitations under the License.
  */
 
-package de.cacheoverflow.krypton.asn1.element
+package de.cacheoverflow.krypton.asn1
 
-import de.cacheoverflow.krypton.asn1.EnumTagClass
-import kotlinx.io.Buffer
 import kotlinx.io.Sink
+import kotlinx.io.Source
 
 /**
  * @author Cedric Hammes
  * @since  29/12/2024
  */
-@Suppress("MemberVisibilityCanBePrivate")
-object ASN1Null : ASN1Element, ASN1ElementFactory<ASN1Null> {
-    override val tagClass: EnumTagClass = EnumTagClass.UNIVERSAL
-    override val tagType: Byte = 0x05
-    override val isConstructed: Boolean = false
+object ASN1Null : ASN1Element, ASN1Element.Factory<ASN1Null> {
+    override val tag: ASN1Element.ASN1Tag = ASN1Element.ASN1Tag.NULL
+    override fun fromData(source: Source, length: Long): Result<ASN1Null> = Result.success(ASN1Null)
 
-    override fun fromData(context: ASN1ParserContext, elementData: Buffer): Result<ASN1Null> = Result.success(ASN1Null)
+    override fun asCollection(): ASN1Collection<*> =
+        throw UnsupportedOperationException("Unable to convert null to collection")
+    override fun asString(): String =
+        throw UnsupportedOperationException("Unable to convert null to string")
+    override fun asAny(): Any =
+        throw UnsupportedOperationException("Unable to convert null to object")
+
     override fun write(sink: Sink) {
-        sink.writeByte(tag)
+        sink.writeByte(tag.value)
         sink.writeASN1Length(0L)
     }
-
-    override fun toString(): String = "Null"
 }

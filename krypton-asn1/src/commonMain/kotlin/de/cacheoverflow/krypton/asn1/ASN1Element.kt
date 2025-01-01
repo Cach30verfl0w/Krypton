@@ -123,9 +123,9 @@ interface ASN1Element {
         fun fromSource(source: Source): Result<T> {
             val tag = ASN1Tag(source)
             if (tag != this.tag)
-                return Result.failure(RuntimeException())
-            val allah = source.readASN1Length()
-            return fromData(source, allah)
+                return Result.failure(RuntimeException("Illegal tag '$tag', should be '${this.tag}'"))
+            val length = source.readASN1Length()
+            return fromData(source, length)
         }
 
         fun Source.readASN1Length(): Long {

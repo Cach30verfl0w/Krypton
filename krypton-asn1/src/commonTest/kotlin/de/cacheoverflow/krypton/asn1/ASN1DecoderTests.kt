@@ -23,10 +23,33 @@ import kotlinx.io.Buffer
 import kotlinx.serialization.Serializable
 import kotlin.test.assertEquals
 
+@Suppress("Unused")
 @OptIn(ExperimentalStdlibApi::class)
-class DERDeserializationTest : ShouldSpec() {
+class ASN1DecoderTests : ShouldSpec() {
     init {
-        should("deserialize hex string into kotlin class") {
+        @Serializable
+        data class TestStructure(
+            val value: Int?,
+            val identifier: ObjectIdentifier,
+            @StringKind(ASN1Utf8String::class) val value1: String,
+            @StringKind(ASN1PrintableString::class) val value2: String
+        )
+
+        should("decode kotlin class from ASN1 with null") {
+            assertEquals(
+                expected = TestStructure(
+                    value = null,
+                    identifier = ObjectIdentifier("1.2.840.113549.1.1.1"),
+                    value1 = "Test1",
+                    value2 = "Test2"
+                ),
+                actual = Buffer()
+                    .also { it.write("301b050006092a864886f70d0101010c05546573743113055465737432".hexToByteArray()) }
+                    .use { ASN1Decoder.deserialize(it, TestStructure.serializer()) },
+                message = "Unable to deserialize ASN.1 sequence"
+            )
+        }
+        should("decode kotlin class from ASN1 without null") {
             @Serializable
             data class TestStructure(
                 val value: Int,

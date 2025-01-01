@@ -36,7 +36,7 @@ class ObjectIdentifierSerializer : KSerializer<ObjectIdentifier> {
     }
 
     override fun deserialize(decoder: Decoder): ObjectIdentifier = when (decoder) {
-        is ASN1Decoder -> ObjectIdentifier.fromSource(decoder.source).getOrNull()!!
+        is ASN1Decoder -> ObjectIdentifier.fromSource(decoder.source).getOrThrow()
         else -> ObjectIdentifier(decoder.decodeString())
     }
 }
@@ -45,7 +45,7 @@ class ObjectIdentifierSerializer : KSerializer<ObjectIdentifier> {
  * This element is representing an object identifier, a worldwide unique identifier referencing objects, concepts etc. standardized by the
  * [International Telecommunication Union](https://en.wikipedia.org/wiki/International_Telecommunication_Union).
  *
- * TODO: Add validation
+ * TODO: Add some validation (extras for string input)
  *
  * @param parts An array list containing the integer parts separated by a dot
  *
@@ -93,6 +93,7 @@ class ObjectIdentifier private constructor(private val parts: List<Int>) : ASN1E
         throw UnsupportedOperationException("Unable to convert object identifier to string")
     override fun asAny(): Any = this
     override fun toString(): String = parts.joinToString(".")
+    override fun hashCode(): Int = parts.hashCode()
 
     companion object : ASN1Element.Factory<ObjectIdentifier> {
         override val tag: ASN1Element.ASN1Tag = ASN1Element.ASN1Tag.OBJECT_ID

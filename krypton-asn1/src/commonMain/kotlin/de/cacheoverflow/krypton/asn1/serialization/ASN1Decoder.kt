@@ -54,6 +54,13 @@ class ASN1Decoder private constructor(internal val source: Source) : TaggedDecod
         ASN1IA5String::class -> ASN1IA5String.fromSource(source)
         else -> throw IllegalArgumentException("Unable to deserialize string (type ${kind?.qualifiedName ?: "eaea"} not supported)")
     }.getOrThrow().asString()
+    override fun decodeTaggedNotNullMark(tag: ElementTag): Boolean {
+        if (ASN1Element.ASN1Tag(source.peek()) == ASN1Element.ASN1Tag.NULL) {
+            ASN1Null.fromSource(source)
+            return false
+        }
+        return true
+    }
 
     override fun beginStructure(descriptor: SerialDescriptor): CompositeDecoder {
         val tag = ASN1Element.ASN1Tag(source)

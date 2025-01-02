@@ -33,6 +33,7 @@ Also, a few dependencies are needed to make this project work. Below this text y
 | [gradle-download-task](https://github.com/michel-kraemer/gradle-download-task) | [Michel Krämer](https://github.com/michel-kraemer)          | [Apache License 2.0](https://github.com/michel-kraemer/gradle-download-task/blob/master/LICENSE.txt) |
 | [kotlinx-io](https://github.com/Kotlin/kotlinx-io) | [Kotlin](https://github.com/Kotlin/kotlinx-io) | [Apache License 2.0](https://github.com/Kotlin/kotlinx-io/blob/master/LICENSE) |
 | [kotlinx-datetime](https://github.com/Kotlin/kotlinx-datetime) | [Kotlin](https://github.com/Kotlin/kotlinx-datetime) | [Apache License 2.0](https://github.com/Kotlin/kotlinx-datetime/blob/master/LICENSE.txt) |
+| [bignum](https://github.com/ionspin/kotlin-multiplatform-bignum/releases) | [Ugljesa Jovanovic ](https://github.com/ionspin) | [Apache License 2.0](https://github.com/ionspin/kotlin-multiplatform-bignum/blob/main/LICENSE) |
 
 ## License
 This project is licensed with the Apache-2.0 License.

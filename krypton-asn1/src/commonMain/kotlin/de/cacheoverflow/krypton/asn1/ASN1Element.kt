@@ -17,20 +17,40 @@
 package de.cacheoverflow.krypton.asn1
 
 import de.cacheoverflow.krypton.asn1.ASN1PrintableString.Companion.readASN1Length
+import de.cacheoverflow.krypton.asn1.serialization.ASN1Decoder
+import de.cacheoverflow.krypton.asn1.serialization.ASN1Encoder
 import kotlinx.io.Buffer
 import kotlinx.io.Sink
 import kotlinx.io.Source
 import kotlinx.io.readByteArray
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.descriptors.buildClassSerialDescriptor
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 import kotlin.jvm.JvmInline
 import kotlin.jvm.JvmStatic
 import kotlin.reflect.KClass
 
+internal class ASN1ElementSerializer : KSerializer<ASN1Element> {
+    override val descriptor: SerialDescriptor = buildClassSerialDescriptor(requireNotNull(ASN1Element::class.qualifiedName))
+    override fun deserialize(decoder: Decoder): ASN1Element = when(decoder) {
+        is ASN1Decoder -> decoder.root.removeFirst()
+        else -> throw IllegalArgumentException("Unable to decoder with ${decoder::class.qualifiedName}")
+    }
+    override fun serialize(encoder: Encoder, value: ASN1Element) = when(encoder) {
+        is ASN1Encoder -> encoder.sequence += value
+        else -> throw IllegalArgumentException("Unable to encode with ${encoder::class.qualifiedName}")
+    }
+}
 
 /**
  * @author Cedric Hammes
  * @since  29/12/2024
  */
-interface ASN1Element {
+@Serializable(with = ASN1ElementSerializer::class)
+sealed interface ASN1Element {
     fun write(sink: Sink)
 
     fun asCollection(): ASN1Collection<*>
@@ -113,6 +133,8 @@ interface ASN1Element {
             @JvmStatic val T61_STRING: ASN1Tag       = ASN1Tag(0x14, EnumTagKind.UNIVERSAL, false)
             @JvmStatic val IA5_STRING: ASN1Tag       = ASN1Tag(0x16, EnumTagKind.UNIVERSAL, false)
             @JvmStatic val UTC_TIME: ASN1Tag         = ASN1Tag(0x17, EnumTagKind.UNIVERSAL, false)
+            @JvmStatic val UNIVERSAL_STRING: ASN1Tag = ASN1Tag(0x1C, EnumTagKind.UNIVERSAL, true)
+            @JvmStatic val BMP_STRING: ASN1Tag       = ASN1Tag(0x1E, EnumTagKind.UNIVERSAL, true)
             // @formatter:on
 
             @JvmStatic
@@ -129,6 +151,8 @@ interface ASN1Element {
                 ASN1T61String::class -> T61_STRING
                 ASN1IA5String::class -> IA5_STRING
                 ASN1UtcTime::class -> UTC_TIME
+                ASN1UniversalString::class -> UNIVERSAL_STRING
+                ASN1BMPString::class -> BMP_STRING
                 else -> null
             }
 

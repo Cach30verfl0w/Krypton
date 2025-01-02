@@ -18,6 +18,7 @@ package de.cacheoverflow.krypton.asn1.serialization
 
 import de.cacheoverflow.krypton.asn1.*
 import de.cacheoverflow.krypton.asn1.annotation.ClassKind
+import de.cacheoverflow.krypton.asn1.annotation.ExperimentalAsn1API
 import de.cacheoverflow.krypton.asn1.annotation.WrappedInto
 import kotlinx.io.Buffer
 import kotlinx.io.Source
@@ -40,6 +41,7 @@ internal inline fun <reified T : ASN1Element> ASN1Collection<*>.dropFirstOrThrow
  * @author Cedric Hammes
  * @since  31/12/2024
  */
+@ExperimentalAsn1API
 @OptIn(InternalSerializationApi::class, ExperimentalSerializationApi::class)
 class ASN1Decoder private constructor(internal val root: ASN1Collection<*>, private val initial: Boolean) : TaggedDecoder<SerialASN1Tag>() {
     private var currentIndex: Int = 0

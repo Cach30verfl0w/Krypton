@@ -14,18 +14,19 @@
  * limitations under the License.
  */
 
-package de.cacheoverflow.krypton.x509
-
-import de.cacheoverflow.krypton.asn1.ASN1Element
-import de.cacheoverflow.krypton.asn1.ASN1Sequence
-import de.cacheoverflow.krypton.asn1.ObjectIdentifier
-import de.cacheoverflow.krypton.asn1.annotation.ClassKind
-import kotlinx.serialization.Serializable
+package de.cacheoverflow.krypton.asn1.annotation
 
 /**
+ * This annotation is used to mark unfinished/WIP serialization or encoding/decoding API targeting the ASN.1 syntax's formats like BER or
+ * DER.
+ *
  * @author Cedric Hammes
  * @since  02/01/2024
  */
-@Serializable
-@ClassKind(ASN1Sequence::class)
-data class AlgorithmIdentifier(val algorithm: ObjectIdentifier, val parameters: ASN1Element)
+@MustBeDocumented
+@Target(AnnotationTarget.CLASS)
+@RequiresOptIn(
+    level = RequiresOptIn.Level.WARNING,
+    message = "This ASN.1 serialization API is experimental. APIs annotated with this annotation can be incomplete"
+)
+annotation class ExperimentalAsn1API

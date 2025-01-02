@@ -17,8 +17,8 @@
 package de.cacheoverflow.krypton.asn1.serialization
 
 import de.cacheoverflow.krypton.asn1.*
-import de.cacheoverflow.krypton.asn1.ASN1IA5String.Companion.readASN1Length
 import de.cacheoverflow.krypton.asn1.annotation.ClassKind
+import de.cacheoverflow.krypton.asn1.annotation.ExperimentalAsn1API
 import de.cacheoverflow.krypton.asn1.annotation.WrappedInto
 import kotlinx.io.Buffer
 import kotlinx.io.Sink
@@ -38,6 +38,7 @@ import kotlin.reflect.KClass
  * @author Cedric Hammes
  * @since  01/01/2025
  */
+@ExperimentalAsn1API
 @OptIn(InternalSerializationApi::class, ExperimentalSerializationApi::class)
 class ASN1Encoder private constructor(
     private val parent: ASN1Collection<*>?,

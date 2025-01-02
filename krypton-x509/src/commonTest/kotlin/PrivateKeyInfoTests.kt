@@ -1,4 +1,5 @@
 import de.cacheoverflow.krypton.asn1.ObjectIdentifier
+import de.cacheoverflow.krypton.asn1.annotation.ExperimentalAsn1API
 import de.cacheoverflow.krypton.asn1.serialization.ASN1Decoder
 import de.cacheoverflow.krypton.x509.PrivateKeyInfo
 import io.kotest.core.spec.style.ShouldSpec
@@ -26,7 +27,7 @@ import kotlin.test.assertEquals
  * limitations under the License.
  */
 
-@OptIn(ExperimentalEncodingApi::class)
+@OptIn(ExperimentalEncodingApi::class, ExperimentalAsn1API::class)
 class PrivateKeyInfoTests : ShouldSpec() {
     init {
         should("deserialize private key info from file") {
@@ -34,6 +35,7 @@ class PrivateKeyInfoTests : ShouldSpec() {
                 val lines = source.readByteArray().decodeToString().split("\n")
                 val rawData = Base64.decode(lines.drop(1).dropLast(2).joinToString(""))
                 val privateKeyInfo = ASN1Decoder.deserialize(rawData, PrivateKeyInfo.serializer()).getOrThrow()
+                println(privateKeyInfo)
                 assertEquals(ObjectIdentifier("1.2.840.113549.1.1.1"), privateKeyInfo.algorithmIdentifier.algorithm)
             }
         }

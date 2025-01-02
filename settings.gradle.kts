@@ -17,5 +17,5 @@ dependencyResolutionManagement {
 }
 
 
-include(":krypton-openssl", ":krypton-core", ":krypton-keystore", ":krypton-asn1")
+include(":krypton-openssl", ":krypton-core", ":krypton-asn1", ":krypton-x509")
 rootProject.name = "krypton"

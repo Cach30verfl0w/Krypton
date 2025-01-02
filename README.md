@@ -4,6 +4,7 @@ Krypton is a modular and extensible library suite for cryptography in Kotlin/Mul
 - **krypton-asn1:** Cross-platform ASN.1 binary format parser with support for [`kotlinx.serialization`](https://github.com/Kotlin/kotlinx.serialization)
 - **krypton-keystore:** Implementation of Native keystores with support for parsing Java Keystores on different platforms
 - **krypton-openssl:** Windows, Linux, macOS and iOS bindings for [OpenSSL](https://github.com/openssl/openssl) [(Apache License 2.0)](https://github.com/openssl/openssl/blob/master/LICENSE.txt)
+- **krypton-x509:** Implementation of APIs for working with X.509 certificates and other PKI data (Certificate Signing Requests, certificates etc.)
 
 The default implementation of Krypton supports different algorithms. Below this text you can see a list of the by-default implemented algorithms:
 - **Cryptographic hash functions:** SHA3 (224, 256, 384 and 512 bits), SHA (224, 256, 384 and 512 bits) and MD5

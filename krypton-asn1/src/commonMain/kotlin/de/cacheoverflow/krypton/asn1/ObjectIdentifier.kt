@@ -29,7 +29,7 @@ import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import kotlin.jvm.JvmStatic
 
-class ObjectIdentifierSerializer : KSerializer<ObjectIdentifier> {
+internal class ObjectIdentifierSerializer : KSerializer<ObjectIdentifier> {
     override val descriptor: SerialDescriptor =
         PrimitiveSerialDescriptor(requireNotNull(ObjectIdentifier::class.qualifiedName), PrimitiveKind.STRING)
 

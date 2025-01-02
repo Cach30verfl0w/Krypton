@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Cedric Hammes
+ * Copyright 2025 Cedric Hammes
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,25 +17,40 @@
 plugins {
     kotlin("multiplatform")
     id("com.android.library")
+    alias(libs.plugins.kotlinx.serialization)
     alias(libs.plugins.dokka)
+    alias(libs.plugins.kotest)
 }
 
 var projectJvmTarget = libs.versions.jvmTarget.get()
 configureAllTargets(projectJvmTarget)
-configureJvmAndAndroid()
-configureOpenSSL()
 
 kotlin {
+    watchosSimulatorArm64()
+    watchosX64()
+    watchosArm32()
+    watchosArm64()
+    tvosSimulatorArm64()
+    tvosX64()
+    tvosArm64()
+    iosArm64()
+
     sourceSets {
         commonMain.dependencies {
-            api(project(":krypton-core"))
             api(project(":krypton-asn1"))
+        }
+        commonTest.dependencies {
+            implementation(kotlin("test"))
+            implementation(libs.bundles.kotest)
+        }
+        jvmTest.dependencies {
+            implementation(libs.kotest.junit.runner)
         }
     }
 }
 
 android {
-    namespace = "${findProperty("project.group")}.keystore"
+    namespace = "${findProperty("project.group")}.x509"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
 
     defaultConfig {

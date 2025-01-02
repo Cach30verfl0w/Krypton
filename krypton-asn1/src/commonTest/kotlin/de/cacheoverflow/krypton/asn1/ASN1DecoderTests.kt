@@ -21,8 +21,6 @@ import de.cacheoverflow.krypton.asn1.annotation.StringKind
 import de.cacheoverflow.krypton.asn1.annotation.WrappedInto
 import de.cacheoverflow.krypton.asn1.serialization.ASN1Decoder
 import io.kotest.core.spec.style.ShouldSpec
-import kotlinx.io.Buffer
-import kotlinx.io.readByteArray
 import kotlinx.serialization.Serializable
 import kotlin.test.assertEquals
 
